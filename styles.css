@@ -12,10 +12,28 @@
   --metal: #9AA5AA;
   --stopper: #4B5563;
   --glass-line: rgba(255,255,255,0.22);
+  --surface: rgba(255,255,255,0.04);
   --liquid: #5EEAD4;
   --liquid-text: #0A2723;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root[data-theme="light"] {
+  --bg: #EEF2F3;
+  --panel: #FFFFFF;
+  --panel-line: #DEE5E7;
+  --accent: #0F9488;
+  --accent-strong: #0D7D72;
+  --accent-sky: #0284C7;
+  --warning: #B45309;
+  --warning-bg: rgba(180, 83, 9, 0.10);
+  --text: #12181B;
+  --text-dim: #5B6A70;
+  --metal: #7C8890;
+  --stopper: #47505A;
+  --glass-line: rgba(15, 23, 26, 0.18);
+  --surface: rgba(15, 23, 26, 0.045);
 }
 
 * { box-sizing: border-box; }
@@ -40,9 +58,40 @@ body {
 .app-header {
   padding: 22px 22px 16px;
   border-bottom: 1px solid var(--panel-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .brand { display: flex; align-items: center; gap: 14px; }
+
+.theme-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+}
+
+.theme-toggle:hover { color: var(--text); }
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.theme-toggle .icon-moon { display: none; }
+
+:root[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
 .brand-mark { width: 44px; height: 44px; flex-shrink: 0; }
 
@@ -103,7 +152,7 @@ main {
 
 .mode-toggle {
   display: flex;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   padding: 3px;
@@ -147,7 +196,7 @@ main {
 .input-unit {
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   overflow: hidden;
@@ -198,7 +247,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface);
   border: 1px solid var(--panel-line);
   border-radius: 9px;
   color: var(--text);
@@ -280,7 +329,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  background: rgba(255,255,255,0.03);
+  background: var(--surface);
   border: 1px solid var(--panel-line);
   border-radius: 9px;
   padding: 12px 8px;
@@ -385,7 +434,7 @@ main {
 
 .plan-input {
   width: 64px;
-  background: rgba(255,255,255,0.04);
+  background: var(--surface);
   border: 1px solid var(--panel-line);
   border-radius: 8px;
   color: var(--text);

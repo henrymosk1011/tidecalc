@@ -26,7 +26,8 @@
     supplyDuration: document.getElementById("supplyDuration"),
     planAmount: document.getElementById("planAmount"),
     planUnitToggle: document.getElementById("planUnitToggle"),
-    planResult: document.getElementById("planResult")
+    planResult: document.getElementById("planResult"),
+    themeToggle: document.getElementById("themeToggle")
   };
 
   els.unitsCard = els.unitsInput.closest(".readout-card");
@@ -320,9 +321,48 @@
 
     els.planAmount.addEventListener("input", render);
 
+    els.themeToggle.addEventListener("click", toggleTheme);
+
     document.querySelectorAll('input[type="number"]').forEach(function (el) {
       el.addEventListener("wheel", function (e) { e.preventDefault(); }, { passive: false });
     });
+  }
+
+  var THEME_KEY = "peptideCalcTheme";
+
+  function applyTheme(theme) {
+    if (theme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      els.themeToggle.setAttribute("aria-label", "Switch to dark mode");
+      els.themeToggle.setAttribute("title", "Switch to dark mode");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      els.themeToggle.setAttribute("aria-label", "Switch to light mode");
+      els.themeToggle.setAttribute("title", "Switch to light mode");
+    }
+    var metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute("content", theme === "light" ? "#EEF2F3" : "#0F1417");
+  }
+
+  function loadTheme() {
+    var saved = null;
+    try {
+      saved = localStorage.getItem(THEME_KEY);
+    } catch (e) {
+      saved = null;
+    }
+    applyTheme(saved === "light" ? "light" : "dark");
+  }
+
+  function toggleTheme() {
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    var next = isLight ? "dark" : "light";
+    applyTheme(next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch (e) {
+      /* storage unavailable, e.g. private browsing; skip persistence */
+    }
   }
 
   function saveState() {
@@ -388,6 +428,7 @@
   }
 
   wireEvents();
+  loadTheme();
   loadState(render);
 
   if ("serviceWorker" in navigator) {
