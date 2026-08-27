@@ -1,0 +1,14 @@
+{
+  "name": "Peptide Dosage Calculator",
+  "short_name": "Dosage Calc",
+  "description": "Calculate peptide injection volume and syringe units from vial concentration and desired dose.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1417",
+  "theme_color": "#0F1417",
+  "icons": [
+    { "src": "icons/icon192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
