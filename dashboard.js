@@ -11,6 +11,9 @@
     doseMg: document.getElementById("doseMg"),
     reconMl: document.getElementById("reconMl"),
     syringeGroup: document.getElementById("syringeGroup"),
+    bacMlPerVial: document.getElementById("bacMlPerVial"),
+    bacLotVials: document.getElementById("bacLotVials"),
+    bacLotPrice: document.getElementById("bacLotPrice"),
     powderShelfMonths: document.getElementById("powderShelfMonths"),
     vialShelfDays: document.getElementById("vialShelfDays"),
     bacShelfDays: document.getElementById("bacShelfDays"),
@@ -30,6 +33,11 @@
     wasteBarWrap: document.getElementById("wasteBarWrap"),
     wasteBarFill: document.getElementById("wasteBarFill"),
     wasteCaption: document.getElementById("wasteCaption"),
+
+    bacEconGrid: document.getElementById("bacEconGrid"),
+    bacWasteBarWrap: document.getElementById("bacWasteBarWrap"),
+    bacWasteBarFill: document.getElementById("bacWasteBarFill"),
+    bacWasteCaption: document.getElementById("bacWasteCaption"),
 
     summaryGrid: document.getElementById("summaryGrid"),
     summaryNote: document.getElementById("summaryNote"),
@@ -81,6 +89,11 @@
   function fmtVol(v) {
     if (v <= 0) return "0";
     if (v < 0.1) return (Math.round(v * 1000) / 1000).toString();
+    return (Math.round(v * 100) / 100).toString();
+  }
+
+  function fmtMg(v) {
+    if (!isFinite(v) || v < 0) v = 0;
     return (Math.round(v * 100) / 100).toString();
   }
 
@@ -360,7 +373,7 @@
     var cards = [
       { label: "Doses per vial", value: econ.dosesPerVial.toString(), sub: limitedText },
       { label: "Vial lasts", value: fmtDaysApprox(econ.activeDays), sub: econ.activeDays + " day" + (econ.activeDays === 1 ? "" : "s") + " before a new one" },
-      { label: "mg used", value: econ.mgUsed + " / " + sku.mgPerVial, sub: fmtPct(econ.wastePct) + " wasted per vial" }
+      { label: "mg used", value: fmtMg(econ.mgUsed) + " / " + sku.mgPerVial, sub: fmtPct(econ.wastePct) + " wasted per vial" }
     ];
     cards.forEach(function (c) {
       var el = document.createElement("div");
@@ -375,7 +388,69 @@
     els.wasteCaption.textContent = pct + "% of each vial gets used before it must be discarded.";
   }
 
-  function renderSummary(peptide, sku, plan, bacPlan, durationDays) {
+  function bacEconomics(bacSku, reconMl, bacShelfDays, cycleDays) {
+    if (reconMl <= 0 || bacSku.mlPerVial <= 0 || reconMl > bacSku.mlPerVial || cycleDays <= 0) {
+      return { reconsPerBottle: 0, activeDays: 0, mlUsed: 0, mlWasted: bacSku.mlPerVial, wastePct: 0 };
+    }
+    // Simulates the same event-by-event rule planBac() uses (a bottle is reused until
+    // it runs out of volume or its shelf-life window closes), so this always agrees
+    // with the BAC vial count shown in Order Summary.
+    var remaining = bacSku.mlPerVial - reconMl;
+    var count = 1;
+    var limitedBy = "volume";
+    for (var i = 1; i < 5000; i++) {
+      var day = i * cycleDays;
+      if (day > bacShelfDays) { limitedBy = "shelf"; break; }
+      if (remaining < reconMl) { limitedBy = "volume"; break; }
+      remaining -= reconMl;
+      count++;
+    }
+    var activeDays = count * cycleDays;
+    var mlUsed = count * reconMl;
+    var mlWasted = Math.max(0, bacSku.mlPerVial - mlUsed);
+    var wastePct = bacSku.mlPerVial > 0 ? mlWasted / bacSku.mlPerVial : 0;
+    return {
+      reconsPerBottle: count,
+      activeDays: activeDays,
+      mlUsed: mlUsed,
+      mlWasted: mlWasted,
+      wastePct: wastePct,
+      limitedBy: limitedBy
+    };
+  }
+
+  function renderBacEcon(bacSku, bacEcon) {
+    els.bacEconGrid.innerHTML = "";
+    if (bacEcon.reconsPerBottle <= 0) {
+      var card = document.createElement("div");
+      card.className = "econ-card";
+      card.style.gridColumn = "1 / -1";
+      card.innerHTML = '<span class="econ-label">Not possible</span><span class="econ-value" style="font-size:14px;">Reconstitution volume is bigger than this bottle</span>';
+      els.bacEconGrid.appendChild(card);
+      els.bacWasteBarWrap.hidden = true;
+      return;
+    }
+    els.bacWasteBarWrap.hidden = false;
+    var limitedText = bacEcon.limitedBy === "shelf" ? "capped by shelf life" : "capped by mL in bottle";
+    var cards = [
+      { label: "Reconstitutions / bottle", value: bacEcon.reconsPerBottle.toString(), sub: limitedText },
+      { label: "Bottle lasts", value: fmtDaysApprox(bacEcon.activeDays), sub: bacEcon.activeDays + " day" + (bacEcon.activeDays === 1 ? "" : "s") + " before a new one" },
+      { label: "mL used", value: fmtMg(bacEcon.mlUsed) + " / " + bacSku.mlPerVial, sub: fmtPct(bacEcon.wastePct) + " wasted per bottle" }
+    ];
+    cards.forEach(function (c) {
+      var el = document.createElement("div");
+      el.className = "econ-card";
+      el.innerHTML = '<span class="econ-label">' + c.label + '</span><span class="econ-value">' + c.value + '</span><span class="econ-sub">' + c.sub + "</span>";
+      els.bacEconGrid.appendChild(el);
+    });
+
+    var pct = Math.round((1 - bacEcon.wastePct) * 1000) / 10;
+    els.bacWasteBarFill.style.width = pct + "%";
+    els.bacWasteBarFill.classList.toggle("warn", bacEcon.wastePct > 0.15);
+    els.bacWasteCaption.textContent = pct + "% of each bottle gets used before it must be discarded.";
+  }
+
+  function renderSummary(peptide, sku, plan, bacPlan, bacSku, durationDays) {
     els.summaryGrid.innerHTML = "";
     if (!plan.ok) {
       var statusText = durationDays <= 0
@@ -393,7 +468,7 @@
     var totalCost = plan.cost + bacPlan.cost;
     var cards = [
       { label: "Peptide vials", value: plan.vialsNeeded.toString(), sub: plan.lotsNeeded + " box" + (plan.lotsNeeded === 1 ? "" : "es") + " of " + sku.lotVials + " &middot; " + fmtMoney(plan.cost) },
-      { label: "BAC water vials", value: bacPlan.vialsNeeded.toString(), sub: bacPlan.lotsNeeded + " box" + (bacPlan.lotsNeeded === 1 ? "" : "es") + " of " + CATALOG.bac.lotVials + " &middot; " + fmtMoney(bacPlan.cost) },
+      { label: "BAC water vials", value: bacPlan.vialsNeeded.toString(), sub: bacPlan.lotsNeeded + " box" + (bacPlan.lotsNeeded === 1 ? "" : "es") + " of " + bacSku.lotVials + " &middot; " + fmtMoney(bacPlan.cost) },
       { label: "Covers", value: fmtDaysApprox(plan.daysCovered), sub: plan.daysCovered + " days from what you buy" },
       { label: "Total cost", value: fmtMoney(totalCost), sub: fmtMoney(totalCost / (durationDays / 30.44)) + " / month", cls: "total" }
     ];
@@ -572,11 +647,19 @@
     els.warningBox.hidden = !overfill;
     els.doseTooBigBox.hidden = doseMg <= sku.mgPerVial;
 
+    var bacSku = {
+      mlPerVial: num(els.bacMlPerVial) || 10,
+      lotVials: Math.max(1, Math.round(num(els.bacLotVials)) || 10),
+      lotPrice: num(els.bacLotPrice)
+    };
+
     var plan = planPeptide(sku, doseMg, dpDose, vialShelfDays, durationDays);
-    var bacPlan = plan.ok ? planBac(CATALOG.bac, reconMl, bacShelfDays, plan.vialsNeeded, plan.cycleDays) : { vialsNeeded: 0, lotsNeeded: 0, cost: 0 };
+    var bacPlan = plan.ok ? planBac(bacSku, reconMl, bacShelfDays, plan.vialsNeeded, plan.cycleDays) : { vialsNeeded: 0, lotsNeeded: 0, cost: 0 };
+    var bacEcon = plan.econ.dosesPerVial > 0 ? bacEconomics(bacSku, reconMl, bacShelfDays, plan.econ.activeDays) : { reconsPerBottle: 0, activeDays: 0, mlUsed: 0, mlWasted: bacSku.mlPerVial, wastePct: 0 };
 
     renderEcon(sku, plan.econ);
-    renderSummary(peptide, sku, plan, bacPlan, durationDays);
+    renderBacEcon(bacSku, bacEcon);
+    renderSummary(peptide, sku, plan, bacPlan, bacSku, durationDays);
     renderPowderWarning(plan, powderShelfMonths);
     renderCompareTable(peptide, doseMg, dpDose, vialShelfDays, durationDays, sku);
 
@@ -610,6 +693,9 @@
 
     els.doseMg.addEventListener("input", render);
     els.reconMl.addEventListener("input", render);
+    els.bacMlPerVial.addEventListener("input", render);
+    els.bacLotVials.addEventListener("input", render);
+    els.bacLotPrice.addEventListener("input", render);
     els.vialShelfDays.addEventListener("input", render);
     els.bacShelfDays.addEventListener("input", render);
     els.planAmount.addEventListener("input", render);
@@ -726,6 +812,9 @@
         doseMg: els.doseMg.value,
         reconMl: els.reconMl.value,
         customFreqDays: els.customFreqDays.value,
+        bacMlPerVial: els.bacMlPerVial.value,
+        bacLotVials: els.bacLotVials.value,
+        bacLotPrice: els.bacLotPrice.value,
         powderShelfMonths: els.powderShelfMonths.value,
         vialShelfDays: els.vialShelfDays.value,
         bacShelfDays: els.bacShelfDays.value,
@@ -754,6 +843,9 @@
       if (saved.doseMg !== undefined) els.doseMg.value = saved.doseMg;
       if (saved.reconMl !== undefined) els.reconMl.value = saved.reconMl;
       if (saved.customFreqDays !== undefined) els.customFreqDays.value = saved.customFreqDays;
+      if (saved.bacMlPerVial !== undefined) els.bacMlPerVial.value = saved.bacMlPerVial;
+      if (saved.bacLotVials !== undefined) els.bacLotVials.value = saved.bacLotVials;
+      if (saved.bacLotPrice !== undefined) els.bacLotPrice.value = saved.bacLotPrice;
       if (saved.powderShelfMonths !== undefined) els.powderShelfMonths.value = saved.powderShelfMonths;
       if (saved.vialShelfDays !== undefined) els.vialShelfDays.value = saved.vialShelfDays;
       if (saved.bacShelfDays !== undefined) els.bacShelfDays.value = saved.bacShelfDays;

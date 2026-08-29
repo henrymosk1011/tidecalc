@@ -102,7 +102,33 @@
       </section>
 
       <section class="panel">
-        <div class="panel-head"><span class="eyebrow">03 &middot; Shelf Life</span></div>
+        <div class="panel-head"><span class="eyebrow">03 &middot; BAC Water</span></div>
+        <div class="field-row">
+          <label for="bacMlPerVial">Bottle size</label>
+          <div class="input-unit">
+            <input type="number" id="bacMlPerVial" inputmode="decimal" min="0.1" step="0.1" value="10" />
+            <span class="unit">mL</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <label for="bacLotVials">Bottles per box</label>
+          <div class="input-unit">
+            <input type="number" id="bacLotVials" inputmode="decimal" min="1" step="1" value="10" />
+            <span class="unit">bottles</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <label for="bacLotPrice">Box price</label>
+          <div class="input-unit">
+            <input type="number" id="bacLotPrice" inputmode="decimal" min="0" step="0.01" value="12" />
+            <span class="unit">$</span>
+          </div>
+        </div>
+        <p class="hint hint-tight">Matches your supplier&rsquo;s BAC water listing &mdash; adjust if your bottle size, box count, or price differs.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">04 &middot; Shelf Life</span></div>
         <div class="field-row">
           <label for="powderShelfMonths">Unopened vial (powder)</label>
           <div class="input-unit">
@@ -128,7 +154,7 @@
       </section>
 
       <section class="panel">
-        <div class="panel-head"><span class="eyebrow">04 &middot; Plan For</span></div>
+        <div class="panel-head"><span class="eyebrow">05 &middot; Plan For</span></div>
         <div class="plan-row plan-row-flush">
           <input type="number" id="planAmount" inputmode="decimal" min="0" step="1" value="3" class="plan-input" />
           <div class="mode-toggle" id="planUnitToggle">
@@ -222,6 +248,15 @@
         <div class="waste-bar-wrap" id="wasteBarWrap">
           <div class="waste-bar"><div class="waste-bar-fill" id="wasteBarFill"></div></div>
           <div class="waste-caption" id="wasteCaption"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="eyebrow">BAC Water Economics</span></div>
+        <div class="econ-grid" id="bacEconGrid"></div>
+        <div class="waste-bar-wrap" id="bacWasteBarWrap">
+          <div class="waste-bar"><div class="waste-bar-fill" id="bacWasteBarFill"></div></div>
+          <div class="waste-caption" id="bacWasteCaption"></div>
         </div>
       </section>
 
