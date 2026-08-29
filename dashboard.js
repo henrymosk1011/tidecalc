@@ -603,13 +603,14 @@
     activeOrderId = o.id;
     saveOrders();
     saveState();
-    renderOrders();
+    openManualAdd(o.id);
     render();
   }
 
   function deleteOrder(id) {
     orders = orders.filter(function (o) { return o.id !== id; });
     if (activeOrderId === id) activeOrderId = orders.length ? orders[orders.length - 1].id : null;
+    if (manualForm && manualForm.orderId === id) manualForm = null;
     saveOrders();
     saveState();
     renderOrders();
@@ -621,6 +622,120 @@
     saveState();
     renderOrders();
     render();
+  }
+
+  function getPeptideByName(name) {
+    for (var i = 0; i < CATALOG.peptides.length; i++) {
+      if (CATALOG.peptides[i].name === name) return CATALOG.peptides[i];
+    }
+    return null;
+  }
+
+  function manualSuggestedPrice(sku, vials) {
+    return Math.round((sku.lotPrice / sku.lotVials) * vials * 100) / 100;
+  }
+
+  var manualForm = null;
+
+  function openManualAdd(orderId) {
+    var peptide = CATALOG.peptides[0];
+    var sku = peptide.skus[0];
+    manualForm = {
+      orderId: orderId,
+      editIndex: null,
+      peptideId: peptide.id,
+      skuCode: sku.sku,
+      vials: sku.lotVials,
+      price: sku.lotPrice,
+      priceTouched: false
+    };
+    renderOrders();
+  }
+
+  function openManualEdit(orderId, idx) {
+    var o = findOrder(orderId);
+    if (!o) return;
+    var item = o.items[idx];
+    var peptide = getPeptideByName(item.peptideName) || CATALOG.peptides[0];
+    var skuCode = item.sku || (peptide.skus[0] && peptide.skus[0].sku);
+    manualForm = {
+      orderId: orderId,
+      editIndex: idx,
+      peptideId: peptide.id,
+      skuCode: skuCode,
+      vials: item.vials,
+      price: item.total,
+      priceTouched: true
+    };
+    renderOrders();
+  }
+
+  function closeManualForm() {
+    manualForm = null;
+    renderOrders();
+  }
+
+  function saveManualForm() {
+    if (!manualForm) return;
+    var o = findOrder(manualForm.orderId);
+    if (!o) return;
+    var peptide = getPeptide(manualForm.peptideId);
+    var sku = getSku(peptide, manualForm.skuCode);
+    var vials = Math.max(1, Math.round(manualForm.vials) || 0);
+    var price = Math.max(0, manualForm.price || 0);
+    var item = {
+      kind: "manual",
+      peptideName: peptide.name,
+      sku: sku.sku,
+      mgPerVial: sku.mgPerVial,
+      doseMg: null,
+      freqLabel: null,
+      durationLabel: null,
+      vials: vials,
+      peptideLots: Math.ceil(vials / sku.lotVials),
+      peptideCost: price,
+      bacVials: 0,
+      bacLots: 0,
+      bacCost: 0,
+      total: price
+    };
+    if (manualForm.editIndex !== null) {
+      o.items[manualForm.editIndex] = item;
+    } else {
+      o.items.push(item);
+    }
+    saveOrders();
+    manualForm = null;
+    renderOrders();
+  }
+
+  function manualFormHtml(o) {
+    var peptide = getPeptide(manualForm.peptideId);
+    var html = '<div class="manual-form" data-order-id="' + o.id + '">';
+    html += '<div class="manual-form-title">' + (manualForm.editIndex !== null ? "Edit item" : "Add item") + "</div>";
+
+    html += '<div class="pill-group pill-group-3" data-role="manual-peptide-group">';
+    CATALOG.peptides.forEach(function (p) {
+      html += '<button type="button" class="pill' + (p.id === manualForm.peptideId ? " active" : "") + '" data-role="manual-peptide" data-peptide-id="' + p.id + '">' + p.name + "</button>";
+    });
+    html += "</div>";
+
+    html += '<div class="pill-group pill-group-sku" data-role="manual-sku-group">';
+    peptide.skus.forEach(function (s) {
+      html += '<button type="button" class="pill' + (s.sku === manualForm.skuCode ? " active" : "") + '" data-role="manual-sku" data-sku="' + s.sku + '">' + s.mgPerVial + "mg<span>" + fmtMoney(s.lotPrice) + " / " + s.lotVials + "</span></button>";
+    });
+    html += "</div>";
+
+    html += '<div class="field-row"><label>Vials</label><div class="input-unit"><input type="number" inputmode="decimal" min="1" step="1" class="manual-input" data-role="manual-vials" value="' + manualForm.vials + '" /><span class="unit">vials</span></div></div>';
+    html += '<div class="field-row"><label>Price paid</label><div class="input-unit"><input type="number" inputmode="decimal" min="0" step="0.01" class="manual-input" data-role="manual-price" value="' + manualForm.price + '" /><span class="unit">$</span></div></div>';
+
+    html += '<div class="manual-form-actions">';
+    html += '<button type="button" class="manual-cancel-btn" data-role="manual-cancel">Cancel</button>';
+    html += '<button type="button" class="manual-save-btn" data-role="manual-save">' + (manualForm.editIndex !== null ? "Save changes" : "Add item") + "</button>";
+    html += "</div>";
+
+    html += "</div>";
+    return html;
   }
 
   function orderCard(o) {
@@ -644,22 +759,36 @@
     if (o.items.length) {
       html += '<div class="order-table-wrap"><table class="order-table"><thead><tr><th>Peptide</th><th>Vial</th><th>Dose</th><th>Duration</th><th>Vials</th><th>BAC</th><th>Total</th><th></th></tr></thead><tbody>';
       o.items.forEach(function (item, idx) {
+        var isManual = item.kind === "manual";
         html += "<tr>";
         html += "<td>" + item.peptideName + "</td>";
         html += "<td>" + item.mgPerVial + "mg</td>";
-        html += "<td>" + item.doseMg + "mg " + item.freqLabel + "</td>";
-        html += "<td>" + item.durationLabel + "</td>";
-        html += "<td>" + item.vials + " (" + item.peptideLots + " box)</td>";
-        html += "<td>" + item.bacVials + " (" + item.bacLots + " box)</td>";
+        html += '<td' + (isManual ? ' class="na"' : "") + ">" + (isManual ? "&mdash;" : item.doseMg + "mg " + item.freqLabel) + "</td>";
+        html += '<td' + (isManual ? ' class="na"' : "") + ">" + (isManual ? "&mdash;" : item.durationLabel) + "</td>";
+        html += "<td>" + item.vials + (isManual ? "" : " (" + item.peptideLots + " box)") + "</td>";
+        html += '<td' + (isManual ? ' class="na"' : "") + ">" + (isManual ? "&mdash;" : item.bacVials + " (" + item.bacLots + " box)") + "</td>";
         html += "<td>" + fmtMoney(item.total) + "</td>";
-        html += '<td><button type="button" class="order-row-remove" data-role="remove-item" data-id="' + o.id + '" data-idx="' + idx + '" aria-label="Remove">&times;</button></td>';
+        html += '<td class="order-row-actions">';
+        if (isManual) {
+          html += '<button type="button" class="order-row-edit" data-role="edit-item" data-id="' + o.id + '" data-idx="' + idx + '" aria-label="Edit">&#9998;</button>';
+        }
+        html += '<button type="button" class="order-row-remove" data-role="remove-item" data-id="' + o.id + '" data-idx="' + idx + '" aria-label="Remove">&times;</button>';
+        html += "</td>";
         html += "</tr>";
       });
       html += "</tbody></table></div>";
       html += '<div class="order-total"><span class="order-total-label">' + plural(o.items.length, "item") + '</span><span class="order-total-value">' + fmtMoney(grandTotal) + "</span></div>";
-    } else {
+    } else if (!(manualForm && manualForm.orderId === o.id)) {
       html += '<div class="order-empty-inline">No items yet.</div>';
     }
+
+    html += '<div class="order-card-footer">';
+    if (manualForm && manualForm.orderId === o.id) {
+      html += manualFormHtml(o);
+    } else {
+      html += '<button type="button" class="add-item-btn" data-role="open-manual-add" data-id="' + o.id + '">+ Add item</button>';
+    }
+    html += "</div>";
 
     html += "</div>";
     return html;
@@ -702,6 +831,61 @@
         o.date = input.value;
         saveOrders();
         renderOrders();
+      });
+    });
+    els.ordersList.querySelectorAll('[data-role="open-manual-add"]').forEach(function (btn) {
+      btn.addEventListener("click", function () { openManualAdd(btn.dataset.id); });
+    });
+    els.ordersList.querySelectorAll('[data-role="edit-item"]').forEach(function (btn) {
+      btn.addEventListener("click", function () { openManualEdit(btn.dataset.id, parseInt(btn.dataset.idx, 10)); });
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-cancel"]').forEach(function (btn) {
+      btn.addEventListener("click", closeManualForm);
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-save"]').forEach(function (btn) {
+      btn.addEventListener("click", saveManualForm);
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-peptide"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (!manualForm) return;
+        var peptide = getPeptide(btn.dataset.peptideId);
+        var sku = peptide.skus[0];
+        manualForm.peptideId = peptide.id;
+        manualForm.skuCode = sku.sku;
+        manualForm.vials = sku.lotVials;
+        if (!manualForm.priceTouched) manualForm.price = manualSuggestedPrice(sku, manualForm.vials);
+        renderOrders();
+      });
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-sku"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (!manualForm) return;
+        var peptide = getPeptide(manualForm.peptideId);
+        var sku = getSku(peptide, btn.dataset.sku);
+        manualForm.skuCode = sku.sku;
+        manualForm.vials = sku.lotVials;
+        if (!manualForm.priceTouched) manualForm.price = manualSuggestedPrice(sku, manualForm.vials);
+        renderOrders();
+      });
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-vials"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        if (!manualForm) return;
+        manualForm.vials = parseFloat(input.value) || 0;
+        if (!manualForm.priceTouched) {
+          var peptide = getPeptide(manualForm.peptideId);
+          var sku = getSku(peptide, manualForm.skuCode);
+          manualForm.price = manualSuggestedPrice(sku, manualForm.vials);
+          var priceInput = input.closest(".manual-form").querySelector('[data-role="manual-price"]');
+          if (priceInput) priceInput.value = manualForm.price;
+        }
+      });
+    });
+    els.ordersList.querySelectorAll('[data-role="manual-price"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        if (!manualForm) return;
+        manualForm.price = parseFloat(input.value) || 0;
+        manualForm.priceTouched = true;
       });
     });
   }
