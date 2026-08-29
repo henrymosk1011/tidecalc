@@ -1,9 +1,13 @@
-var CACHE_NAME = "peptide-calc-v1";
+var CACHE_NAME = "peptide-calc-v4";
 var ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./dashboard.html",
+  "./dashboard.css",
+  "./dashboard.js",
+  "./catalog.js",
   "./manifest.webmanifest",
   "./icons/icon192.png",
   "./icons/icon512.png"
