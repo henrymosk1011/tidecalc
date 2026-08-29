@@ -279,16 +279,12 @@
 
   <section class="panel order-panel">
     <div class="panel-head">
-      <span class="eyebrow">Your Order</span>
-      <div class="date-field" id="orderDateField">
-        <span class="date-display" id="orderDateDisplay">&nbsp;</span>
-        <input type="date" id="orderDate" class="date-input" />
-      </div>
+      <span class="eyebrow">Orders</span>
+      <button type="button" class="new-order-btn" id="newOrderBtn">+ New order</button>
     </div>
-    <div class="order-table-wrap"><table class="order-table" id="orderTable"></table></div>
-    <div class="order-empty" id="orderEmpty">Nothing added yet &mdash; configure a peptide above and tap &ldquo;Add to order.&rdquo;</div>
-    <div class="order-total" id="orderTotal" hidden></div>
-    <button type="button" class="clear-order-btn" id="clearOrderBtn" hidden>Clear order</button>
+    <p class="hint hint-tight">&ldquo;Add to order&rdquo; above adds the current setup to the active order below. Start a new order to log a separate purchase &mdash; past or future, any date.</p>
+    <div id="ordersList"></div>
+    <div class="order-empty" id="ordersEmpty">No orders yet &mdash; configure a peptide above and tap &ldquo;Add to order.&rdquo;</div>
   </section>
 
   <footer class="app-footer">

@@ -46,12 +46,9 @@
 
     compareTable: document.getElementById("compareTable"),
 
-    orderDate: document.getElementById("orderDate"),
-    orderDateDisplay: document.getElementById("orderDateDisplay"),
-    orderTable: document.getElementById("orderTable"),
-    orderEmpty: document.getElementById("orderEmpty"),
-    orderTotal: document.getElementById("orderTotal"),
-    clearOrderBtn: document.getElementById("clearOrderBtn"),
+    newOrderBtn: document.getElementById("newOrderBtn"),
+    ordersList: document.getElementById("ordersList"),
+    ordersEmpty: document.getElementById("ordersEmpty"),
 
     themeToggle: document.getElementById("themeToggle")
   };
@@ -537,7 +534,8 @@
     els.compareTable.innerHTML = html;
   }
 
-  var ORDER_KEY = "peptideOrderCart";
+  var ORDERS_KEY = "peptideOrders";
+  var LEGACY_ORDER_KEY = "peptideOrderCart";
 
   function todayLocal() {
     var d = new Date();
@@ -546,62 +544,164 @@
     return d.getFullYear() + "-" + mm + "-" + dd;
   }
 
-  function loadOrder() {
+  function newOrderId() {
+    return "o" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function loadOrders() {
     try {
-      var raw = localStorage.getItem(ORDER_KEY);
+      var raw = localStorage.getItem(ORDERS_KEY);
       if (raw) return JSON.parse(raw);
     } catch (e) { /* storage unavailable */ }
-    return { date: todayLocal(), items: [] };
+    try {
+      var legacyRaw = localStorage.getItem(LEGACY_ORDER_KEY);
+      if (legacyRaw) {
+        localStorage.removeItem(LEGACY_ORDER_KEY);
+        var legacy = JSON.parse(legacyRaw);
+        if (legacy && legacy.items && legacy.items.length) {
+          return [{ id: newOrderId(), date: legacy.date || todayLocal(), items: legacy.items }];
+        }
+      }
+    } catch (e) { /* storage unavailable */ }
+    return [];
   }
 
-  function saveOrder(order) {
+  function saveOrders() {
     try {
-      localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
     } catch (e) { /* storage unavailable */ }
   }
 
-  var order = loadOrder();
+  var orders = loadOrders();
+  var activeOrderId = orders.length ? orders[orders.length - 1].id : null;
 
-  function renderOrder() {
-    els.orderDate.value = order.date;
-    els.orderDateDisplay.textContent = fmtDateShort(order.date);
-    if (!order.items.length) {
-      els.orderTable.innerHTML = "";
-      els.orderEmpty.hidden = false;
-      els.orderTotal.hidden = true;
-      els.clearOrderBtn.hidden = true;
+  function findOrder(id) {
+    for (var i = 0; i < orders.length; i++) {
+      if (orders[i].id === id) return orders[i];
+    }
+    return null;
+  }
+
+  function getActiveOrder() {
+    return findOrder(activeOrderId);
+  }
+
+  function ensureActiveOrder() {
+    var found = findOrder(activeOrderId);
+    if (found) return found;
+    var o = { id: newOrderId(), date: todayLocal(), items: [] };
+    orders.push(o);
+    activeOrderId = o.id;
+    saveOrders();
+    saveState();
+    return o;
+  }
+
+  function createNewOrder() {
+    var o = { id: newOrderId(), date: todayLocal(), items: [] };
+    orders.push(o);
+    activeOrderId = o.id;
+    saveOrders();
+    saveState();
+    renderOrders();
+    render();
+  }
+
+  function deleteOrder(id) {
+    orders = orders.filter(function (o) { return o.id !== id; });
+    if (activeOrderId === id) activeOrderId = orders.length ? orders[orders.length - 1].id : null;
+    saveOrders();
+    saveState();
+    renderOrders();
+    render();
+  }
+
+  function activateOrder(id) {
+    activeOrderId = id;
+    saveState();
+    renderOrders();
+    render();
+  }
+
+  function orderCard(o) {
+    var isActive = o.id === activeOrderId;
+    var grandTotal = o.items.reduce(function (s, it) { return s + it.total; }, 0);
+
+    var html = '<div class="order-card' + (isActive ? " active" : "") + '" data-id="' + o.id + '">';
+    html += '<div class="order-card-head">';
+    html += '<div class="date-field" data-role="order-date" data-id="' + o.id + '">';
+    html += '<span class="date-display">' + fmtDateShort(o.date) + '</span>';
+    html += '<input type="date" class="date-input" data-role="order-date-input" data-id="' + o.id + '" value="' + o.date + '" />';
+    html += "</div>";
+    html += '<div class="order-card-actions">';
+    html += isActive
+      ? '<span class="order-active-tag">Active</span>'
+      : '<button type="button" class="order-activate-btn" data-role="activate" data-id="' + o.id + '">Add items here</button>';
+    html += '<button type="button" class="order-delete-btn" data-role="delete-order" data-id="' + o.id + '" aria-label="Delete order">&times;</button>';
+    html += "</div>";
+    html += "</div>";
+
+    if (o.items.length) {
+      html += '<div class="order-table-wrap"><table class="order-table"><thead><tr><th>Peptide</th><th>Vial</th><th>Dose</th><th>Duration</th><th>Vials</th><th>BAC</th><th>Total</th><th></th></tr></thead><tbody>';
+      o.items.forEach(function (item, idx) {
+        html += "<tr>";
+        html += "<td>" + item.peptideName + "</td>";
+        html += "<td>" + item.mgPerVial + "mg</td>";
+        html += "<td>" + item.doseMg + "mg " + item.freqLabel + "</td>";
+        html += "<td>" + item.durationLabel + "</td>";
+        html += "<td>" + item.vials + " (" + item.peptideLots + " box)</td>";
+        html += "<td>" + item.bacVials + " (" + item.bacLots + " box)</td>";
+        html += "<td>" + fmtMoney(item.total) + "</td>";
+        html += '<td><button type="button" class="order-row-remove" data-role="remove-item" data-id="' + o.id + '" data-idx="' + idx + '" aria-label="Remove">&times;</button></td>';
+        html += "</tr>";
+      });
+      html += "</tbody></table></div>";
+      html += '<div class="order-total"><span class="order-total-label">' + plural(o.items.length, "item") + '</span><span class="order-total-value">' + fmtMoney(grandTotal) + "</span></div>";
+    } else {
+      html += '<div class="order-empty-inline">No items yet.</div>';
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  function renderOrders() {
+    if (!orders.length) {
+      els.ordersList.innerHTML = "";
+      els.ordersEmpty.hidden = false;
       return;
     }
-    els.orderEmpty.hidden = true;
-    els.orderTotal.hidden = false;
-    els.clearOrderBtn.hidden = false;
+    els.ordersEmpty.hidden = true;
 
-    var html = "<thead><tr><th>Peptide</th><th>Vial</th><th>Dose</th><th>Duration</th><th>Vials</th><th>BAC</th><th>Total</th><th></th></tr></thead><tbody>";
-    var grandTotal = 0;
-    order.items.forEach(function (item, idx) {
-      grandTotal += item.total;
-      html += "<tr>";
-      html += "<td>" + item.peptideName + "</td>";
-      html += "<td>" + item.mgPerVial + "mg</td>";
-      html += "<td>" + item.doseMg + "mg " + item.freqLabel + "</td>";
-      html += "<td>" + item.durationLabel + "</td>";
-      html += "<td>" + item.vials + " (" + item.peptideLots + " box)</td>";
-      html += "<td>" + item.bacVials + " (" + item.bacLots + " box)</td>";
-      html += "<td>" + fmtMoney(item.total) + "</td>";
-      html += '<td><button type="button" class="order-row-remove" data-idx="' + idx + '" aria-label="Remove">&times;</button></td>';
-      html += "</tr>";
+    var sorted = orders.slice().sort(function (a, b) {
+      if (a.date === b.date) return 0;
+      return a.date < b.date ? 1 : -1;
     });
-    html += "</tbody>";
-    els.orderTable.innerHTML = html;
+    els.ordersList.innerHTML = sorted.map(orderCard).join("");
 
-    els.orderTotal.innerHTML = '<span class="order-total-label">Grand total &middot; ' + plural(order.items.length, "item") + '</span><span class="order-total-value">' + fmtMoney(grandTotal) + "</span>";
-
-    els.orderTable.querySelectorAll(".order-row-remove").forEach(function (btn) {
+    els.ordersList.querySelectorAll('[data-role="activate"]').forEach(function (btn) {
+      btn.addEventListener("click", function () { activateOrder(btn.dataset.id); });
+    });
+    els.ordersList.querySelectorAll('[data-role="delete-order"]').forEach(function (btn) {
+      btn.addEventListener("click", function () { deleteOrder(btn.dataset.id); });
+    });
+    els.ordersList.querySelectorAll('[data-role="remove-item"]').forEach(function (btn) {
       btn.addEventListener("click", function () {
-        var idx = parseInt(btn.dataset.idx, 10);
-        order.items.splice(idx, 1);
-        saveOrder(order);
-        renderOrder();
+        var o = findOrder(btn.dataset.id);
+        if (!o) return;
+        o.items.splice(parseInt(btn.dataset.idx, 10), 1);
+        saveOrders();
+        renderOrders();
+      });
+    });
+    els.ordersList.querySelectorAll('[data-role="order-date-input"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        if (!input.value) return;
+        var o = findOrder(input.dataset.id);
+        if (!o) return;
+        o.date = input.value;
+        saveOrders();
+        renderOrders();
       });
     });
   }
@@ -679,6 +779,9 @@
       total: plan.ok ? plan.cost + bacPlan.cost : 0
     };
 
+    var activeOrder = getActiveOrder();
+    els.addOrderBtn.textContent = activeOrder ? "Add to order — " + fmtDateShort(activeOrder.date) : "Add to order";
+
     saveState();
   }
 
@@ -724,7 +827,8 @@
 
     els.addOrderBtn.addEventListener("click", function () {
       if (!lastPlan || !lastPlan.ok) return;
-      order.items.push({
+      var target = ensureActiveOrder();
+      target.items.push({
         peptideName: lastPlan.peptideName,
         mgPerVial: lastPlan.mgPerVial,
         doseMg: lastPlan.doseMg,
@@ -738,22 +842,12 @@
         bacCost: lastPlan.bacCost,
         total: lastPlan.total
       });
-      saveOrder(order);
-      renderOrder();
+      saveOrders();
+      renderOrders();
+      render();
     });
 
-    els.clearOrderBtn.addEventListener("click", function () {
-      order.items = [];
-      saveOrder(order);
-      renderOrder();
-    });
-
-    els.orderDate.addEventListener("input", function () {
-      if (!els.orderDate.value) return;
-      order.date = els.orderDate.value;
-      els.orderDateDisplay.textContent = fmtDateShort(order.date);
-      saveOrder(order);
-    });
+    els.newOrderBtn.addEventListener("click", createNewOrder);
 
     els.powderShelfMonths.addEventListener("input", render);
 
@@ -818,7 +912,8 @@
         powderShelfMonths: els.powderShelfMonths.value,
         vialShelfDays: els.vialShelfDays.value,
         bacShelfDays: els.bacShelfDays.value,
-        planAmount: els.planAmount.value
+        planAmount: els.planAmount.value,
+        activeOrderId: activeOrderId
       }));
     } catch (e) { /* storage unavailable */ }
   }
@@ -850,6 +945,7 @@
       if (saved.vialShelfDays !== undefined) els.vialShelfDays.value = saved.vialShelfDays;
       if (saved.bacShelfDays !== undefined) els.bacShelfDays.value = saved.bacShelfDays;
       if (saved.planAmount !== undefined) els.planAmount.value = saved.planAmount;
+      if (saved.activeOrderId && findOrder(saved.activeOrderId)) activeOrderId = saved.activeOrderId;
     } else {
       els.doseMg.value = fmtSmart(peptide.defaultDoseMg);
       els.reconMl.value = fmtSmart(peptide.defaultReconMl || 2);
@@ -865,7 +961,7 @@
   wireEvents();
   loadTheme();
   loadState();
-  renderOrder();
+  renderOrders();
   render();
 
   if ("serviceWorker" in navigator) {

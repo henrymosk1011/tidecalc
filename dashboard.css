@@ -208,7 +208,7 @@
   text-align: center;
 }
 
-.add-order-btn, .clear-order-btn {
+.add-order-btn {
   width: 100%;
   margin-top: 14px;
   padding: 12px;
@@ -222,12 +222,21 @@
   cursor: pointer;
 }
 
-.clear-order-btn {
-  background: transparent;
+.new-order-btn {
+  flex-shrink: 0;
+  background: var(--surface);
   border: 1px solid var(--panel-line);
-  color: var(--text-dim);
-  font-weight: 600;
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 11px;
+  cursor: pointer;
+  white-space: nowrap;
 }
+
+.new-order-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 .compare-table-wrap, .order-table-wrap {
   overflow-x: auto;
@@ -287,6 +296,90 @@
 
 .order-panel {
   margin: 0 22px 18px;
+}
+
+.order-panel .panel-head {
+  flex-wrap: wrap;
+}
+
+.order-card {
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 14px;
+}
+
+.order-card.active {
+  border-color: var(--accent);
+  background: rgba(94, 234, 212, 0.04);
+}
+
+.order-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.order-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-activate-btn {
+  background: transparent;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.order-activate-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.order-active-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  background: rgba(94, 234, 212, 0.14);
+  padding: 5px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.order-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
+
+.order-delete-btn:hover { color: var(--warning); }
+
+.order-empty-inline {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.order-card .order-table-wrap {
+  margin-top: 10px;
+}
+
+.order-card .order-total {
+  margin-top: 10px;
 }
 
 .date-field {
