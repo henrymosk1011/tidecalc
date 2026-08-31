@@ -1,4 +1,4 @@
-var CACHE_NAME = "peptide-calc-v8";
+var CACHE_NAME = "peptide-calc-v9";
 var ASSETS = [
   "./",
   "./index.html",

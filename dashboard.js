@@ -20,14 +20,11 @@
     planAmount: document.getElementById("planAmount"),
     planUnitToggle: document.getElementById("planUnitToggle"),
 
-    vialLabel: document.getElementById("vialLabel"),
-    syrLiquid: document.getElementById("syrLiquid"),
-    plungerHead: document.getElementById("plungerHead"),
-    tickGroup: document.getElementById("tickGroup"),
-    warningBox: document.getElementById("warningBox"),
-    doseTooBigBox: document.getElementById("doseTooBigBox"),
-    unitsOut: document.getElementById("unitsOut"),
-    volOut: document.getElementById("volOut"),
+    drawConc: document.getElementById("drawConc"),
+    drawDose: document.getElementById("drawDose"),
+    drawWarn: document.getElementById("drawWarn"),
+    doseTooBigWarn: document.getElementById("doseTooBigWarn"),
+    advancedHint: document.getElementById("advancedHint"),
 
     econGrid: document.getElementById("econGrid"),
     wasteBarWrap: document.getElementById("wasteBarWrap"),
@@ -39,6 +36,8 @@
     bacWasteBarFill: document.getElementById("bacWasteBarFill"),
     bacWasteCaption: document.getElementById("bacWasteCaption"),
 
+    summaryTotal: document.getElementById("summaryTotal"),
+    summaryTotalSub: document.getElementById("summaryTotalSub"),
     summaryGrid: document.getElementById("summaryGrid"),
     summaryNote: document.getElementById("summaryNote"),
     powderWarningBox: document.getElementById("powderWarningBox"),
@@ -53,8 +52,6 @@
     themeToggle: document.getElementById("themeToggle")
   };
 
-  els.unitsCard = els.unitsOut.closest(".readout-card");
-
   var DAY_LEN = { days: 1, weeks: 7, months: 30.44, years: 365.25 };
   var FREQ_LABEL = { daily: "Daily", eod: "Every other day", weekly: "Weekly", custom: "Custom" };
 
@@ -67,10 +64,6 @@
     timeUnit: "days",
     planUnit: "months"
   };
-
-  var BARREL_X0 = 64;
-  var BARREL_X1 = 294;
-  var BARREL_WIDTH = BARREL_X1 - BARREL_X0;
 
   function num(el) {
     var v = parseFloat(el.value);
@@ -207,83 +200,6 @@
     var lotsNeeded = Math.ceil(bacVialsUsed / bacSku.lotVials);
     var cost = lotsNeeded * bacSku.lotPrice;
     return { vialsNeeded: bacVialsUsed, lotsNeeded: lotsNeeded, cost: cost };
-  }
-
-  function niceStep(rough) {
-    if (rough <= 0 || !isFinite(rough)) return 1;
-    var mag = Math.pow(10, Math.floor(Math.log10(rough)));
-    var norm = rough / mag;
-    var niceNorm;
-    if (norm < 1.5) niceNorm = 1;
-    else if (norm < 3) niceNorm = 2;
-    else if (norm < 7) niceNorm = 5;
-    else niceNorm = 10;
-    return niceNorm * mag;
-  }
-
-  function tickPlan(maxUnits) {
-    if (!isFinite(maxUnits) || maxUnits <= 0) return [];
-    var majorStep = niceStep(maxUnits / 8);
-    var minorStep = majorStep / 5;
-    if (!isFinite(minorStep) || minorStep <= 0 || (maxUnits / minorStep) > 120) {
-      minorStep = majorStep;
-    }
-    var numMajors = Math.round(maxUnits / majorStep);
-    var labelStep = numMajors > 8 ? majorStep * 2 : majorStep;
-
-    var ticks = [];
-    var seen = {};
-    for (var u = 0; u <= maxUnits + 1e-9; u += minorStep) {
-      var unit = Math.round(u * 100) / 100;
-      if (seen[unit]) continue;
-      seen[unit] = true;
-      var modMajor = unit % majorStep;
-      var isMajor = modMajor < 1e-6 || (majorStep - modMajor) < 1e-6;
-      var modLabel = unit % labelStep;
-      var isLabel = modLabel < 1e-6 || (labelStep - modLabel) < 1e-6;
-      ticks.push({ unit: unit, isMajor: isMajor, showLabel: isLabel });
-    }
-    var last = ticks[ticks.length - 1];
-    if (!last || Math.abs(last.unit - maxUnits) > 1e-6) {
-      ticks.push({ unit: Math.round(maxUnits * 100) / 100, isMajor: true, showLabel: true });
-    }
-    var n = ticks.length;
-    if (n >= 2 && ticks[n - 1].showLabel) {
-      for (var j = n - 2; j >= 0; j--) {
-        if (ticks[j].showLabel) {
-          if ((ticks[n - 1].unit - ticks[j].unit) < labelStep * 0.6) {
-            ticks[j].showLabel = false;
-          }
-          break;
-        }
-      }
-    }
-    return ticks;
-  }
-
-  function renderTicks(maxUnits) {
-    var ns = "http://www.w3.org/2000/svg";
-    els.tickGroup.innerHTML = "";
-    tickPlan(maxUnits).forEach(function (t) {
-      var x = BARREL_X0 + (t.unit / maxUnits) * BARREL_WIDTH;
-      var line = document.createElementNS(ns, "line");
-      line.setAttribute("x1", x);
-      line.setAttribute("x2", x);
-      line.setAttribute("y1", 78);
-      line.setAttribute("y2", t.isMajor ? 96 : 90);
-      line.setAttribute("class", t.isMajor ? "tick-major" : "tick");
-      els.tickGroup.appendChild(line);
-
-      if (t.showLabel) {
-        var label = document.createElementNS(ns, "text");
-        label.setAttribute("x", Math.min(Math.max(x, 14), 346));
-        label.setAttribute("y", 118);
-        label.setAttribute("text-anchor", "middle");
-        label.setAttribute("class", "tick-label");
-        label.textContent = t.unit;
-        els.tickGroup.appendChild(label);
-      }
-    });
   }
 
   function buildPeptidePills() {
@@ -450,29 +366,26 @@
   function renderSummary(peptide, sku, plan, bacPlan, bacSku, durationDays) {
     els.summaryGrid.innerHTML = "";
     if (!plan.ok) {
-      var statusText = durationDays <= 0
-        ? "Enter how long you want this to last"
-        : "Not enough peptide per vial for this dose";
+      els.summaryTotal.textContent = "$0.00";
+      els.summaryTotalSub.innerHTML = "&nbsp;";
       els.summaryNote.textContent = durationDays <= 0
-        ? "Fill in \"Plan for\" above to see vials and cost."
+        ? "Fill in \"Plan for\" to see vials and cost."
         : "Increase the vial size or lower the dose to get a working plan.";
-      var card = document.createElement("div");
-      card.className = "summary-card wide";
-      card.innerHTML = '<span class="summary-label">Status</span><span class="summary-value" style="font-size:15px;">' + statusText + "</span>";
-      els.summaryGrid.appendChild(card);
       return;
     }
     var totalCost = plan.cost + bacPlan.cost;
-    var cards = [
-      { label: "Peptide vials", value: plan.vialsNeeded.toString(), sub: plan.lotsNeeded + " box" + (plan.lotsNeeded === 1 ? "" : "es") + " of " + sku.lotVials + " &middot; " + fmtMoney(plan.cost) },
-      { label: "BAC water vials", value: bacPlan.vialsNeeded.toString(), sub: bacPlan.lotsNeeded + " box" + (bacPlan.lotsNeeded === 1 ? "" : "es") + " of " + bacSku.lotVials + " &middot; " + fmtMoney(bacPlan.cost) },
-      { label: "Covers", value: fmtDaysApprox(plan.daysCovered), sub: plan.daysCovered + " days from what you buy" },
-      { label: "Total cost", value: fmtMoney(totalCost), sub: fmtMoney(totalCost / (durationDays / 30.44)) + " / month", cls: "total" }
+    els.summaryTotal.textContent = fmtMoney(totalCost);
+    els.summaryTotalSub.textContent = fmtMoney(totalCost / (durationDays / 30.44)) + " / month";
+
+    var rows = [
+      { label: "Peptide vials", num: plan.vialsNeeded.toString(), sub: plan.lotsNeeded + " box" + (plan.lotsNeeded === 1 ? "" : "es") + " of " + sku.lotVials + " &middot; " + fmtMoney(plan.cost) },
+      { label: "BAC water vials", num: bacPlan.vialsNeeded.toString(), sub: bacPlan.lotsNeeded + " box" + (bacPlan.lotsNeeded === 1 ? "" : "es") + " of " + bacSku.lotVials + " &middot; " + fmtMoney(bacPlan.cost) },
+      { label: "Covers", num: fmtDaysApprox(plan.daysCovered), sub: plan.daysCovered + " days from what you buy" }
     ];
-    cards.forEach(function (c) {
+    rows.forEach(function (r) {
       var el = document.createElement("div");
-      el.className = "summary-card" + (c.cls ? " " + c.cls : "");
-      el.innerHTML = '<span class="summary-label">' + c.label + '</span><span class="summary-value">' + c.value + '</span><span class="summary-sub">' + c.sub + "</span>";
+      el.className = "summary-row";
+      el.innerHTML = '<span class="summary-row-label">' + r.label + '</span><span class="summary-row-value"><span class="summary-row-num">' + r.num + '</span><span class="summary-row-sub">' + r.sub + "</span></span>";
       els.summaryGrid.appendChild(el);
     });
 
@@ -909,27 +822,17 @@
     var conc = sku.mgPerVial / reconMl;
     var doseVolumeMl = conc > 0 ? doseMg / conc : 0;
     var units = doseVolumeMl * 100;
-    var maxUnits = Math.round(state.syringeCapacity * 100 * 100) / 100;
 
-    els.unitsOut.textContent = fmtSmart(units);
-    els.volOut.textContent = fmtVol(doseVolumeMl);
-    els.vialLabel.textContent = conc.toFixed(2);
-
-    renderTicks(maxUnits);
+    els.drawConc.textContent = conc.toFixed(2) + " mg/mL";
+    els.drawDose.textContent = fmtSmart(units) + " units (" + fmtVol(doseVolumeMl) + " mL)";
 
     var percentFull = state.syringeCapacity > 0 ? doseVolumeMl / state.syringeCapacity : 0;
     var overfill = percentFull > 1;
-    var visualPercent = Math.min(Math.max(percentFull, 0), 1);
-    var fillWidth = visualPercent * BARREL_WIDTH;
-    els.syrLiquid.setAttribute("width", fillWidth);
-    els.syrLiquid.setAttribute("fill", overfill ? "var(--warning)" : "var(--liquid)");
-    var headX = BARREL_X0 + fillWidth;
-    els.plungerHead.setAttribute("x1", headX);
-    els.plungerHead.setAttribute("x2", headX);
-    els.plungerHead.setAttribute("stroke", overfill ? "var(--warning)" : "var(--accent-strong)");
-    els.unitsCard.classList.toggle("warn", overfill);
-    els.warningBox.hidden = !overfill;
-    els.doseTooBigBox.hidden = doseMg <= sku.mgPerVial;
+    els.drawDose.classList.toggle("warn", overfill);
+    els.drawWarn.hidden = !overfill;
+    els.doseTooBigWarn.hidden = doseMg <= sku.mgPerVial;
+
+    els.advancedHint.textContent = num(els.bacMlPerVial) + "mL bottles · " + num(els.vialShelfDays) + "-day shelf life";
 
     var bacSku = {
       mlPerVial: num(els.bacMlPerVial) || 10,

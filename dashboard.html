@@ -26,7 +26,7 @@
       </svg>
       <div>
         <h1>Order Dashboard</h1>
-        <p class="subtitle">Pick a peptide, see the real cost.</p>
+        <p class="subtitle">Pick a peptide, see what it costs.</p>
       </div>
     </div>
     <div class="header-actions">
@@ -47,7 +47,7 @@
     <div class="col col-inputs">
 
       <section class="panel">
-        <div class="panel-head"><span class="eyebrow">01 &middot; Peptide</span></div>
+        <div class="panel-head"><span class="eyebrow">Peptide</span></div>
         <div class="pill-group pill-group-3" id="peptideGroup"></div>
 
         <div class="field-row sku-label-row">
@@ -59,7 +59,7 @@
 
       <section class="panel">
         <div class="panel-head">
-          <span class="eyebrow">02 &middot; Dosing</span>
+          <span class="eyebrow">Dosing</span>
           <div class="mode-toggle mode-toggle-4" id="freqToggle">
             <button type="button" class="mode-btn" data-freq="daily">Daily</button>
             <button type="button" class="mode-btn" data-freq="eod">EOD</button>
@@ -92,6 +92,9 @@
           </div>
         </div>
 
+        <div class="field-row sku-label-row">
+          <label>Syringe</label>
+        </div>
         <div class="pill-group" id="syringeGroup">
           <button type="button" class="pill" data-capacity="0.3">0.3 mL<span>30 units</span></button>
           <button type="button" class="pill" data-capacity="0.5">0.5 mL<span>50 units</span></button>
@@ -99,62 +102,10 @@
           <button type="button" class="pill" data-capacity="1.5">1.5 mL<span>150 units</span></button>
           <button type="button" class="pill" data-capacity="2">2 mL<span>200 units</span></button>
         </div>
-      </section>
 
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">03 &middot; BAC Water</span></div>
-        <div class="field-row">
-          <label for="bacMlPerVial">Bottle size</label>
-          <div class="input-unit">
-            <input type="number" id="bacMlPerVial" inputmode="decimal" min="0.1" step="0.1" value="10" />
-            <span class="unit">mL</span>
-          </div>
-        </div>
-        <div class="field-row">
-          <label for="bacLotVials">Bottles per box</label>
-          <div class="input-unit">
-            <input type="number" id="bacLotVials" inputmode="decimal" min="1" step="1" value="10" />
-            <span class="unit">bottles</span>
-          </div>
-        </div>
-        <div class="field-row">
-          <label for="bacLotPrice">Box price</label>
-          <div class="input-unit">
-            <input type="number" id="bacLotPrice" inputmode="decimal" min="0" step="0.01" value="12" />
-            <span class="unit">$</span>
-          </div>
-        </div>
-        <p class="hint hint-tight">Matches your supplier&rsquo;s BAC water listing &mdash; adjust if your bottle size, box count, or price differs.</p>
-      </section>
+        <div class="panel-divider"></div>
 
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">04 &middot; Shelf Life</span></div>
-        <div class="field-row">
-          <label for="powderShelfMonths">Unopened vial (powder)</label>
-          <div class="input-unit">
-            <input type="number" id="powderShelfMonths" inputmode="decimal" min="1" step="1" value="24" />
-            <span class="unit">months</span>
-          </div>
-        </div>
-        <div class="field-row">
-          <label for="vialShelfDays">Reconstituted vial</label>
-          <div class="input-unit">
-            <input type="number" id="vialShelfDays" inputmode="decimal" min="1" step="1" value="28" />
-            <span class="unit">days</span>
-          </div>
-        </div>
-        <div class="field-row">
-          <label for="bacShelfDays">Opened BAC water</label>
-          <div class="input-unit">
-            <input type="number" id="bacShelfDays" inputmode="decimal" min="1" step="1" value="28" />
-            <span class="unit">days</span>
-          </div>
-        </div>
-        <p class="hint">A fresh vial or BAC bottle is needed once it runs dry or its shelf-life window closes &mdash; whichever happens first. Powder shelf life caps how many you can safely stock up on before reconstituting.</p>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">05 &middot; Plan For</span></div>
+        <div class="panel-head"><span class="eyebrow">Plan for</span></div>
         <div class="plan-row plan-row-flush">
           <input type="number" id="planAmount" inputmode="decimal" min="0" step="1" value="3" class="plan-input" />
           <div class="mode-toggle" id="planUnitToggle">
@@ -165,94 +116,104 @@
         </div>
       </section>
 
+      <details class="panel details-panel">
+        <summary class="details-summary">
+          <span class="details-summary-title">Advanced settings</span>
+          <span class="details-summary-hint" id="advancedHint">BAC water &amp; shelf life</span>
+        </summary>
+        <div class="details-body">
+          <p class="details-group-label">BAC water</p>
+          <div class="field-row">
+            <label for="bacMlPerVial">Bottle size</label>
+            <div class="input-unit">
+              <input type="number" id="bacMlPerVial" inputmode="decimal" min="0.1" step="0.1" value="10" />
+              <span class="unit">mL</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="bacLotVials">Bottles per box</label>
+            <div class="input-unit">
+              <input type="number" id="bacLotVials" inputmode="decimal" min="1" step="1" value="10" />
+              <span class="unit">bottles</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="bacLotPrice">Box price</label>
+            <div class="input-unit">
+              <input type="number" id="bacLotPrice" inputmode="decimal" min="0" step="0.01" value="12" />
+              <span class="unit">$</span>
+            </div>
+          </div>
+
+          <div class="panel-divider"></div>
+
+          <p class="details-group-label">Shelf life</p>
+          <div class="field-row">
+            <label for="powderShelfMonths">Unopened vial (powder)</label>
+            <div class="input-unit">
+              <input type="number" id="powderShelfMonths" inputmode="decimal" min="1" step="1" value="24" />
+              <span class="unit">months</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="vialShelfDays">Reconstituted vial</label>
+            <div class="input-unit">
+              <input type="number" id="vialShelfDays" inputmode="decimal" min="1" step="1" value="28" />
+              <span class="unit">days</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="bacShelfDays">Opened BAC water</label>
+            <div class="input-unit">
+              <input type="number" id="bacShelfDays" inputmode="decimal" min="1" step="1" value="28" />
+              <span class="unit">days</span>
+            </div>
+          </div>
+          <p class="hint">A fresh vial or BAC bottle is needed once it runs dry or its shelf-life window closes &mdash; whichever happens first. Powder shelf life caps how many you can safely stock up on before reconstituting.</p>
+        </div>
+      </details>
+
     </div>
     <div class="col col-outputs">
 
-      <section class="panel result-panel">
-        <div class="panel-head"><span class="eyebrow">Draw</span></div>
-
-        <div class="instrument">
-          <div class="vial-wrap">
-            <svg viewBox="0 0 110 190" class="vial-svg">
-              <defs>
-                <linearGradient id="vialGlass2" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="rgba(255,255,255,0.06)"/>
-                  <stop offset="45%" stop-color="rgba(255,255,255,0.16)"/>
-                  <stop offset="55%" stop-color="rgba(255,255,255,0.03)"/>
-                  <stop offset="100%" stop-color="rgba(255,255,255,0.10)"/>
-                </linearGradient>
-                <clipPath id="vialClip2">
-                  <rect x="21" y="58" width="68" height="122" rx="10"/>
-                </clipPath>
-              </defs>
-              <rect x="45" y="6" width="20" height="12" fill="var(--metal)"/>
-              <rect x="40" y="18" width="30" height="16" rx="2" fill="var(--stopper)"/>
-              <path d="M40 34 L38 58 L72 58 L70 34 Z" fill="url(#vialGlass2)" stroke="var(--glass-line)" stroke-width="1"/>
-              <rect x="21" y="58" width="68" height="122" rx="10" fill="url(#vialGlass2)" stroke="var(--glass-line)" stroke-width="1.2"/>
-              <g clip-path="url(#vialClip2)">
-                <rect id="vialLiquid" x="21" y="90" width="68" height="90" fill="var(--liquid)"/>
-                <path id="vialMeniscus" d="M21 90 Q55 84 89 90 L89 96 L21 96 Z" fill="var(--liquid)" opacity="0.6"/>
-              </g>
-              <rect x="21" y="58" width="68" height="122" rx="10" fill="none" stroke="var(--glass-line)" stroke-width="1.2"/>
-              <text id="vialLabel" x="55" y="145" text-anchor="middle" class="vial-label">2.50</text>
-              <text x="55" y="160" text-anchor="middle" class="vial-sublabel">mg/mL</text>
-            </svg>
-          </div>
-
-          <div class="syringe-wrap">
-            <svg viewBox="0 0 360 130" class="syringe-svg" id="syringeSvg">
-              <defs>
-                <clipPath id="barrelClip2">
-                  <rect x="64" y="42" width="230" height="36" rx="5"/>
-                </clipPath>
-              </defs>
-              <line x1="4" y1="60" x2="40" y2="60" stroke="var(--metal)" stroke-width="4" stroke-linecap="round"/>
-              <path d="M40 48 L64 53 L64 67 L40 72 Z" fill="var(--metal)"/>
-              <rect x="64" y="42" width="230" height="36" rx="5" fill="rgba(255,255,255,0.05)" stroke="var(--glass-line)" stroke-width="1.4"/>
-              <g clip-path="url(#barrelClip2)">
-                <rect id="syrLiquid" x="64" y="42" width="0" height="36" fill="var(--liquid)"/>
-              </g>
-              <g id="tickGroup"></g>
-              <line id="plungerHead" x1="64" y1="36" x2="64" y2="84" stroke="var(--accent-strong)" stroke-width="3"/>
-              <rect x="294" y="50" width="10" height="28" fill="var(--metal)"/>
-              <rect x="304" y="38" width="8" height="52" fill="var(--metal)"/>
-              <rect x="312" y="30" width="18" height="68" rx="3" fill="var(--metal)"/>
-            </svg>
-          </div>
+      <section class="panel draw-mini">
+        <div class="draw-mini-row">
+          <span class="draw-mini-label">Concentration</span>
+          <span class="draw-mini-value" id="drawConc">&mdash;</span>
         </div>
+        <div class="draw-mini-row">
+          <span class="draw-mini-label">Draw per dose</span>
+          <span class="draw-mini-value" id="drawDose">&mdash;</span>
+        </div>
+        <div class="warning" id="drawWarn" hidden>Dose is larger than the selected syringe. Choose a bigger barrel or split the dose.</div>
+        <div class="warning" id="doseTooBigWarn" hidden>Dose is bigger than a single vial at this size. Pick a larger vial.</div>
+      </section>
 
-        <div class="warning" id="warningBox" hidden>
-          Dose volume is larger than this syringe holds. Choose a bigger barrel or split the dose.
+      <section class="panel hero-panel">
+        <div class="panel-head"><span class="eyebrow">What you&rsquo;ll need</span></div>
+        <div class="hero-total">
+          <span class="hero-total-value" id="summaryTotal">$0.00</span>
+          <span class="hero-total-sub" id="summaryTotalSub">&nbsp;</span>
         </div>
-        <div class="warning" id="doseTooBigBox" hidden>
-          This dose is bigger than a single vial at this size. Pick a larger vial.
-        </div>
-
-        <div class="readout-grid">
-          <div class="readout-card highlight">
-            <span class="readout-label">Draw to</span>
-            <span class="readout-static mono" id="unitsOut">0</span>
-            <span class="readout-unit">units</span>
-          </div>
-          <div class="readout-card">
-            <span class="readout-label">Volume</span>
-            <span class="readout-static mono" id="volOut">0</span>
-            <span class="readout-unit">mL</span>
-          </div>
-        </div>
+        <div class="summary-rows" id="summaryGrid"></div>
+        <div class="summary-note" id="summaryNote"></div>
+        <div class="warning" id="powderWarningBox" hidden></div>
+        <button type="button" class="add-order-btn" id="addOrderBtn">Add to order</button>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><span class="eyebrow">Vial Economics</span></div>
+        <div class="panel-head"><span class="eyebrow">Efficiency</span></div>
+
+        <p class="efficiency-col-title">Peptide vial</p>
         <div class="econ-grid" id="econGrid"></div>
         <div class="waste-bar-wrap" id="wasteBarWrap">
           <div class="waste-bar"><div class="waste-bar-fill" id="wasteBarFill"></div></div>
           <div class="waste-caption" id="wasteCaption"></div>
         </div>
-      </section>
 
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">BAC Water Economics</span></div>
+        <div class="panel-divider"></div>
+
+        <p class="efficiency-col-title">BAC bottle</p>
         <div class="econ-grid" id="bacEconGrid"></div>
         <div class="waste-bar-wrap" id="bacWasteBarWrap">
           <div class="waste-bar"><div class="waste-bar-fill" id="bacWasteBarFill"></div></div>
@@ -260,19 +221,15 @@
         </div>
       </section>
 
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">Order Summary</span></div>
-        <div class="summary-grid" id="summaryGrid"></div>
-        <div class="summary-note" id="summaryNote"></div>
-        <div class="warning" id="powderWarningBox" hidden></div>
-        <button type="button" class="add-order-btn" id="addOrderBtn">Add to order</button>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head"><span class="eyebrow">Compare Vial Sizes</span></div>
-        <p class="hint hint-tight">Same dose &amp; duration, every vial size for this peptide.</p>
-        <div class="compare-table-wrap"><table class="compare-table" id="compareTable"></table></div>
-      </section>
+      <details class="panel details-panel">
+        <summary class="details-summary">
+          <span class="details-summary-title">Compare vial sizes</span>
+          <span class="details-summary-hint">Every option for this peptide</span>
+        </summary>
+        <div class="details-body">
+          <div class="compare-table-wrap"><table class="compare-table" id="compareTable"></table></div>
+        </div>
+      </details>
 
     </div>
   </main>

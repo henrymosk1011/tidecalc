@@ -70,22 +70,120 @@
   border-top: none;
 }
 
-.readout-static {
-  width: 100%;
-  display: block;
-  text-align: center;
+.panel-divider {
+  height: 1px;
+  background: var(--panel-line);
+  margin: 18px 0;
+}
+
+/* Draw readout */
+
+.draw-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.draw-mini-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.draw-mini-label {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.draw-mini-value {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
-  font-size: 20px;
-  font-weight: 600;
-  padding: 2px 0;
+  text-align: right;
 }
 
-.readout-card.highlight .readout-static {
-  color: var(--accent);
-  font-size: 28px;
+.draw-mini-value.warn { color: var(--warning); }
+
+/* Collapsible sections */
+
+.details-panel {
+  padding: 0;
+  overflow: hidden;
 }
 
-.readout-card.warn .readout-static { color: var(--warning) !important; }
+.details-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 17px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.details-summary::-webkit-details-marker { display: none; }
+
+.details-summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: rotate(-45deg);
+  margin-left: 6px;
+}
+
+details[open] .details-summary::after {
+  transform: rotate(45deg);
+}
+
+.details-summary-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.details-summary-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  margin-left: auto;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details-body {
+  padding: 14px 18px 20px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.details-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 2px;
+}
+
+/* Efficiency */
+
+.efficiency-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
 
 .econ-grid {
   display: grid;
@@ -101,13 +199,10 @@
 }
 
 .econ-card .econ-label {
+  display: block;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--text-dim);
-}
-
-.econ-card .econ-label {
-  display: block;
 }
 
 .econ-card .econ-value {
@@ -152,48 +247,69 @@
   text-align: center;
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+/* Hero: What you'll need */
 
-.summary-card {
-  background: var(--surface);
-  border: 1px solid var(--panel-line);
-  border-radius: 9px;
-  padding: 11px 12px;
-}
-
-.summary-card.wide { grid-column: 1 / -1; }
-
-.summary-card.total {
+.hero-panel {
   border-color: var(--accent);
-  background: rgba(94, 234, 212, 0.08);
 }
 
-.summary-card .summary-label {
+.hero-total {
+  text-align: center;
+  padding: 4px 0 6px;
+}
+
+.hero-total-value {
   display: block;
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+}
+
+.hero-total-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
   color: var(--text-dim);
 }
 
-.summary-card .summary-value {
+.summary-rows {
+  margin-top: 12px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.summary-row:last-child { border-bottom: none; }
+
+.summary-row-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.summary-row-value {
+  text-align: right;
+  min-width: 0;
+}
+
+.summary-row-value .summary-row-num {
   display: block;
-  margin-top: 4px;
   font-family: var(--mono);
-  font-size: 17px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--text);
 }
 
-.summary-card.total .summary-value {
-  color: var(--accent);
-  font-size: 22px;
-}
-
-.summary-card .summary-sub {
+.summary-row-value .summary-row-sub {
   display: block;
   margin-top: 2px;
   font-size: 11px;
@@ -558,5 +674,4 @@
 
 @media (min-width: 760px) {
   .econ-grid { grid-template-columns: repeat(3, 1fr); }
-  .summary-grid { grid-template-columns: repeat(3, 1fr); }
 }
