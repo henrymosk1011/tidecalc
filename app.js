@@ -2,21 +2,17 @@
   "use strict";
 
   var els = {
-    vialMg: document.getElementById("vialMg"),
-    vialVolume: document.getElementById("vialVolume"),
-    vialConc: document.getElementById("vialConc"),
     syringeGroup: document.getElementById("syringeGroup"),
     customPill: document.getElementById("customPill"),
-    customCapRow: document.getElementById("customCapRow"),
     customCapInput: document.getElementById("customCapInput"),
     customUnitsLabel: document.getElementById("customUnitsLabel"),
     freqToggle: document.getElementById("freqToggle"),
-    doseMg: document.getElementById("doseMg"),
     vialLabel: document.getElementById("vialLabel"),
     syrLiquid: document.getElementById("syrLiquid"),
     plungerHead: document.getElementById("plungerHead"),
     tickGroup: document.getElementById("tickGroup"),
     warningBox: document.getElementById("warningBox"),
+    concValue: document.getElementById("concValue"),
     unitsInput: document.getElementById("unitsInput"),
     volInput: document.getElementById("volInput"),
     doseGrid: document.getElementById("doseGrid"),
@@ -24,7 +20,6 @@
     supplyReadout: document.getElementById("supplyReadout"),
     timeToggle: document.getElementById("timeToggle"),
     supplyDuration: document.getElementById("supplyDuration"),
-    planAmount: document.getElementById("planAmount"),
     planUnitToggle: document.getElementById("planUnitToggle"),
     planResult: document.getElementById("planResult"),
     themeToggle: document.getElementById("themeToggle")
@@ -35,11 +30,14 @@
   var DAY_LEN = { days: 1, weeks: 7, months: 30.44, years: 365.25 };
 
   var state = {
+    vialMg: 5,
+    vialVolume: 2,
+    doseMg: 0.25,
     syringeCapacity: 1,
     freq: "daily",
-    vialOrder: ["conc", "vol", "mg"],
     drawPrimary: "dose",
     timeUnit: "days",
+    planAmount: 3,
     planUnit: "months"
   };
 
@@ -67,28 +65,6 @@
     if (v <= 0) return "0";
     if (v < 0.1) return (Math.round(v * 1000) / 1000).toString();
     return (Math.round(v * 100) / 100).toString();
-  }
-
-  function touchVialField(field) {
-    var idx = state.vialOrder.indexOf(field);
-    if (idx > -1) state.vialOrder.splice(idx, 1);
-    state.vialOrder.push(field);
-  }
-
-  function solveVial() {
-    var mg = num(els.vialMg), vol = num(els.vialVolume), conc = num(els.vialConc);
-    var target = state.vialOrder[0];
-    if (target === "mg") {
-      mg = conc * vol;
-      els.vialMg.value = fmtSmart(mg);
-    } else if (target === "vol") {
-      vol = conc > 0 ? mg / conc : 0;
-      els.vialVolume.value = fmtSmart(vol);
-    } else {
-      conc = vol > 0 ? mg / vol : 0;
-      els.vialConc.value = fmtSmart(conc);
-    }
-    return { mg: mg, vol: vol, conc: conc };
   }
 
   function niceStep(rough) {
@@ -198,19 +174,17 @@
       els.supplyDuration.textContent = "";
     }
 
-    var planAmt = num(els.planAmount);
-    var targetDays = planAmt * DAY_LEN[state.planUnit];
+    var targetDays = state.planAmount * DAY_LEN[state.planUnit];
     var dosesNeeded = targetDays / daysPerDose();
     var vialsNeeded = totalDoses > 0 ? Math.ceil(dosesNeeded / totalDoses) : 0;
     els.planResult.textContent =
-      planAmt > 0 && totalDoses > 0
-        ? "You'll need about " + vialsNeeded + " vial" + (vialsNeeded === 1 ? "" : "s") + " to cover " + planAmt + " " + state.planUnit + "."
+      state.planAmount > 0 && totalDoses > 0
+        ? "You'll need about " + vialsNeeded + " vial" + (vialsNeeded === 1 ? "" : "s") + " to cover " + state.planAmount + " " + state.planUnit + "."
         : "Enter a vial setup and a time span to estimate vials needed.";
   }
 
   function render() {
-    var vial = solveVial();
-    var conc = vial.conc;
+    var conc = state.vialVolume > 0 ? state.vialMg / state.vialVolume : 0;
     var maxUnits = Math.round(state.syringeCapacity * 100 * 100) / 100;
 
     var dose, volumeMl, units;
@@ -223,12 +197,12 @@
       volumeMl = units / 100;
       dose = volumeMl * conc;
     } else {
-      dose = num(els.doseMg);
+      dose = state.doseMg;
       volumeMl = conc > 0 ? dose / conc : 0;
       units = volumeMl * 100;
     }
 
-    if (state.drawPrimary !== "dose") els.doseMg.value = fmtSmart(dose);
+    els.concValue.textContent = fmtSmart(conc);
     if (state.drawPrimary !== "volume") els.volInput.value = fmtVol(volumeMl);
     if (state.drawPrimary !== "units") els.unitsInput.value = fmtUnits(units);
 
@@ -251,7 +225,7 @@
     els.unitsCard.classList.toggle("warn", overfill);
     els.warningBox.hidden = !overfill;
 
-    renderSupply(vial.mg, dose);
+    renderSupply(state.vialMg, dose);
     saveState();
   }
 
@@ -263,27 +237,75 @@
 
   function selectSyringe(capacityValue) {
     if (capacityValue === "custom") {
-      els.customCapRow.hidden = false;
+      els.customCapInput.hidden = false;
       state.syringeCapacity = num(els.customCapInput) || 1;
-      setActiveButton(els.syringeGroup, ".pill", "capacity", "custom");
+      setActiveButton(els.syringeGroup, ".chip", "capacity", "custom");
     } else {
-      els.customCapRow.hidden = true;
+      els.customCapInput.hidden = true;
       state.syringeCapacity = parseFloat(capacityValue);
-      setActiveButton(els.syringeGroup, ".pill", "capacity", capacityValue);
+      setActiveButton(els.syringeGroup, ".chip", "capacity", capacityValue);
     }
     render();
   }
 
+  function setupChipField(groupId, customId) {
+    var group = document.getElementById(groupId);
+    var custom = document.getElementById(customId);
+    var chips = Array.prototype.slice.call(group.querySelectorAll(".chip"));
+
+    function highlight(value, isCustom) {
+      chips.forEach(function (chip) {
+        chip.classList.toggle("active", !isCustom && Math.abs(parseFloat(chip.dataset.value) - value) < 1e-9);
+      });
+      custom.classList.toggle("active-custom", isCustom);
+    }
+
+    return {
+      onSelect: null,
+      wire: function (onSelect) {
+        this.onSelect = onSelect;
+        chips.forEach(function (chip) {
+          chip.addEventListener("click", function () {
+            var v = parseFloat(chip.dataset.value);
+            highlight(v, false);
+            custom.value = "";
+            onSelect(v);
+            render();
+          });
+        });
+        custom.addEventListener("input", function () {
+          var v = parseFloat(custom.value);
+          if (isFinite(v) && v >= 0) {
+            highlight(v, true);
+            onSelect(v);
+            render();
+          }
+        });
+      },
+      init: function (value, onSelect) {
+        var matched = chips.some(function (chip) { return Math.abs(parseFloat(chip.dataset.value) - value) < 1e-9; });
+        highlight(value, !matched);
+        if (!matched) custom.value = fmtSmart(value);
+        onSelect(value);
+      }
+    };
+  }
+
+  var vialMgField = setupChipField("vialMgGroup", "vialMgCustom");
+  var vialVolumeField = setupChipField("vialVolumeGroup", "vialVolumeCustom");
+  var doseMgField = setupChipField("doseMgGroup", "doseMgCustom");
+  var planAmountField = setupChipField("planAmountGroup", "planAmountCustom");
+
   function wireEvents() {
-    els.vialMg.addEventListener("input", function () { touchVialField("mg"); render(); });
-    els.vialVolume.addEventListener("input", function () { touchVialField("vol"); render(); });
-    els.vialConc.addEventListener("input", function () { touchVialField("conc"); render(); });
+    vialMgField.wire(function (v) { state.vialMg = v; });
+    vialVolumeField.wire(function (v) { state.vialVolume = v; });
+    doseMgField.wire(function (v) { state.doseMg = v; state.drawPrimary = "dose"; });
+    planAmountField.wire(function (v) { state.planAmount = v; });
 
-    els.doseMg.addEventListener("input", function () { state.drawPrimary = "dose"; render(); });
-    els.volInput.addEventListener("input", function () { state.drawPrimary = "volume"; render(); });
     els.unitsInput.addEventListener("input", function () { state.drawPrimary = "units"; render(); });
+    els.volInput.addEventListener("input", function () { state.drawPrimary = "volume"; render(); });
 
-    els.syringeGroup.querySelectorAll(".pill").forEach(function (btn) {
+    els.syringeGroup.querySelectorAll(".chip").forEach(function (btn) {
       btn.addEventListener("click", function () {
         selectSyringe(btn.dataset.capacity);
       });
@@ -318,8 +340,6 @@
         render();
       });
     });
-
-    els.planAmount.addEventListener("input", render);
 
     els.themeToggle.addEventListener("click", toggleTheme);
 
@@ -368,21 +388,19 @@
   function saveState() {
     try {
       localStorage.setItem("peptideCalc", JSON.stringify({
+        vialMg: state.vialMg,
+        vialVolume: state.vialVolume,
+        doseMg: state.doseMg,
         syringeCapacity: state.syringeCapacity,
         freq: state.freq,
-        vialOrder: state.vialOrder,
         drawPrimary: state.drawPrimary,
         timeUnit: state.timeUnit,
+        planAmount: state.planAmount,
         planUnit: state.planUnit,
-        vialMg: els.vialMg.value,
-        vialVolume: els.vialVolume.value,
-        vialConc: els.vialConc.value,
-        doseMg: els.doseMg.value,
         volInput: els.volInput.value,
         unitsInput: els.unitsInput.value,
         customCapInput: els.customCapInput.value,
-        planAmount: els.planAmount.value,
-        customActive: !els.customCapRow.hidden
+        customActive: !els.customCapInput.hidden
       }));
     } catch (e) {
       /* storage unavailable, e.g. private browsing; skip persistence */
@@ -398,32 +416,36 @@
       saved = null;
     }
     if (saved) {
+      if (saved.vialMg !== undefined) state.vialMg = saved.vialMg;
+      if (saved.vialVolume !== undefined) state.vialVolume = saved.vialVolume;
+      if (saved.doseMg !== undefined) state.doseMg = saved.doseMg;
       state.freq = saved.freq || state.freq;
-      state.vialOrder = saved.vialOrder || state.vialOrder;
       state.drawPrimary = saved.drawPrimary || state.drawPrimary;
       state.timeUnit = saved.timeUnit || state.timeUnit;
       state.planUnit = saved.planUnit || state.planUnit;
-      if (saved.vialMg !== undefined) els.vialMg.value = saved.vialMg;
-      if (saved.vialVolume !== undefined) els.vialVolume.value = saved.vialVolume;
-      if (saved.vialConc !== undefined) els.vialConc.value = saved.vialConc;
-      if (saved.doseMg !== undefined) els.doseMg.value = saved.doseMg;
+      if (saved.planAmount !== undefined) state.planAmount = saved.planAmount;
       if (saved.volInput !== undefined) els.volInput.value = saved.volInput;
       if (saved.unitsInput !== undefined) els.unitsInput.value = saved.unitsInput;
-      if (saved.customCapInput !== undefined) els.customCapInput.value = saved.customCapInput;
-      if (saved.planAmount !== undefined) els.planAmount.value = saved.planAmount;
 
       state.syringeCapacity = saved.syringeCapacity || state.syringeCapacity;
       if (saved.customActive) {
-        els.customCapRow.hidden = false;
-        setActiveButton(els.syringeGroup, ".pill", "capacity", "custom");
+        els.customCapInput.hidden = false;
+        els.customCapInput.value = saved.customCapInput || state.syringeCapacity;
+        setActiveButton(els.syringeGroup, ".chip", "capacity", "custom");
         els.customUnitsLabel.textContent = Math.round(state.syringeCapacity * 100) + " units";
       } else {
-        setActiveButton(els.syringeGroup, ".pill", "capacity", state.syringeCapacity);
+        setActiveButton(els.syringeGroup, ".chip", "capacity", state.syringeCapacity);
       }
       setActiveButton(els.freqToggle, ".mode-btn", "freq", state.freq);
       setActiveButton(els.timeToggle, ".mode-btn", "unit", state.timeUnit);
       setActiveButton(els.planUnitToggle, ".mode-btn", "unit", state.planUnit);
     }
+
+    vialMgField.init(state.vialMg, function (v) { state.vialMg = v; });
+    vialVolumeField.init(state.vialVolume, function (v) { state.vialVolume = v; });
+    doseMgField.init(state.doseMg, function (v) { state.doseMg = v; });
+    planAmountField.init(state.planAmount, function (v) { state.planAmount = v; });
+
     done();
   }
 

@@ -44,79 +44,76 @@
   </header>
 
   <main>
-    <div class="col col-inputs">
 
-    <section class="panel">
-      <div class="panel-head"><span class="eyebrow">01 &middot; Vial</span></div>
+    <section class="panel builder-panel">
+      <div class="panel-head"><span class="eyebrow">Build your dose</span></div>
 
-      <div class="field-row">
-        <label for="vialMg">Peptide in vial</label>
-        <div class="input-unit">
-          <input type="number" id="vialMg" inputmode="decimal" min="0" step="0.01" value="5" />
-          <span class="unit">mg</span>
+      <div class="selector-grid">
+        <div class="selector">
+          <h3 class="selector-title">Peptide in vial</h3>
+          <div class="chip-group" id="vialMgGroup">
+            <button type="button" class="chip" data-value="2">2mg</button>
+            <button type="button" class="chip active" data-value="5">5mg</button>
+            <button type="button" class="chip" data-value="10">10mg</button>
+            <button type="button" class="chip" data-value="15">15mg</button>
+            <button type="button" class="chip" data-value="20">20mg</button>
+            <button type="button" class="chip" data-value="30">30mg</button>
+          </div>
+          <input type="number" class="custom-field" id="vialMgCustom" inputmode="decimal" min="0" step="0.01" placeholder="Custom amount (mg)" />
         </div>
-      </div>
 
-      <div class="field-row">
-        <label for="vialVolume">Liquid in vial</label>
-        <div class="input-unit">
-          <input type="number" id="vialVolume" inputmode="decimal" min="0" step="0.01" value="2" />
-          <span class="unit">mL</span>
+        <div class="selector">
+          <h3 class="selector-title">Bacwater added</h3>
+          <div class="chip-group" id="vialVolumeGroup">
+            <button type="button" class="chip" data-value="0.5">0.5mL</button>
+            <button type="button" class="chip" data-value="1">1mL</button>
+            <button type="button" class="chip active" data-value="2">2mL</button>
+            <button type="button" class="chip" data-value="2.5">2.5mL</button>
+            <button type="button" class="chip" data-value="3">3mL</button>
+            <button type="button" class="chip" data-value="5">5mL</button>
+          </div>
+          <input type="number" class="custom-field" id="vialVolumeCustom" inputmode="decimal" min="0" step="0.01" placeholder="Custom volume (mL)" />
         </div>
-      </div>
 
-      <div class="field-row">
-        <label for="vialConc">Concentration</label>
-        <div class="input-unit">
-          <input type="number" id="vialConc" inputmode="decimal" min="0" step="0.01" value="2.5" />
-          <span class="unit">mg/mL</span>
-        </div>
-      </div>
-
-      <p class="hint">Any two of these decide the third. Type into any field and the one you touched longest ago updates for you.</p>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head"><span class="eyebrow">02 &middot; Syringe</span></div>
-      <div class="pill-group" id="syringeGroup">
-        <button type="button" class="pill" data-capacity="0.3">0.3 mL<span>30 units</span></button>
-        <button type="button" class="pill" data-capacity="0.5">0.5 mL<span>50 units</span></button>
-        <button type="button" class="pill active" data-capacity="1">1 mL<span>100 units</span></button>
-        <button type="button" class="pill" data-capacity="1.5">1.5 mL<span>150 units</span></button>
-        <button type="button" class="pill" data-capacity="2">2 mL<span>200 units</span></button>
-        <button type="button" class="pill" data-capacity="custom" id="customPill">Custom<span id="customUnitsLabel">set mL</span></button>
-      </div>
-      <div class="field-row" id="customCapRow" hidden>
-        <label for="customCapInput">Custom barrel size</label>
-        <div class="input-unit">
-          <input type="number" id="customCapInput" inputmode="decimal" min="0.01" step="0.01" value="1" />
-          <span class="unit">mL</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <span class="eyebrow">03 &middot; Schedule</span>
-        <div class="mode-toggle" id="freqToggle">
-          <button type="button" class="mode-btn active" data-freq="daily">Daily</button>
-          <button type="button" class="mode-btn" data-freq="weekly">Weekly</button>
-        </div>
-      </div>
-      <div class="field-row">
-        <label for="doseMg">Dose per injection</label>
-        <div class="input-unit">
-          <input type="number" id="doseMg" inputmode="decimal" min="0" step="0.01" value="0.25" />
-          <span class="unit">mg</span>
+        <div class="selector">
+          <h3 class="selector-title">Dose per injection</h3>
+          <div class="chip-group" id="doseMgGroup">
+            <button type="button" class="chip" data-value="0.1">0.1mg</button>
+            <button type="button" class="chip active" data-value="0.25">0.25mg</button>
+            <button type="button" class="chip" data-value="0.5">0.5mg</button>
+            <button type="button" class="chip" data-value="1">1mg</button>
+            <button type="button" class="chip" data-value="2">2mg</button>
+            <button type="button" class="chip" data-value="2.5">2.5mg</button>
+            <button type="button" class="chip" data-value="5">5mg</button>
+            <button type="button" class="chip" data-value="10">10mg</button>
+          </div>
+          <input type="number" class="custom-field" id="doseMgCustom" inputmode="decimal" min="0" step="0.01" placeholder="Custom dose (mg)" />
+          <div class="mode-toggle" id="freqToggle">
+            <button type="button" class="mode-btn active" data-freq="daily">Daily</button>
+            <button type="button" class="mode-btn" data-freq="weekly">Weekly</button>
+          </div>
         </div>
       </div>
     </section>
 
-    </div>
-    <div class="col col-outputs">
+    <section class="panel">
+      <div class="panel-head"><span class="eyebrow">Setup</span></div>
+      <div class="selector">
+        <h3 class="selector-title">Syringe size</h3>
+        <div class="chip-group" id="syringeGroup">
+          <button type="button" class="chip" data-capacity="0.3">0.3 mL<span>30 units</span></button>
+          <button type="button" class="chip" data-capacity="0.5">0.5 mL<span>50 units</span></button>
+          <button type="button" class="chip active" data-capacity="1">1 mL<span>100 units</span></button>
+          <button type="button" class="chip" data-capacity="1.5">1.5 mL<span>150 units</span></button>
+          <button type="button" class="chip" data-capacity="2">2 mL<span>200 units</span></button>
+          <button type="button" class="chip" data-capacity="custom" id="customPill">Custom<span id="customUnitsLabel">set mL</span></button>
+        </div>
+        <input type="number" class="custom-field" id="customCapInput" inputmode="decimal" min="0.01" step="0.01" placeholder="Barrel size (mL)" hidden />
+      </div>
+    </section>
 
     <section class="panel result-panel">
-      <div class="panel-head"><span class="eyebrow">Draw</span></div>
+      <div class="panel-head"><span class="eyebrow">Results</span></div>
 
       <div class="instrument">
         <div class="vial-wrap">
@@ -181,6 +178,11 @@
       </div>
 
       <div class="readout-grid">
+        <div class="readout-card">
+          <span class="readout-label">Concentration</span>
+          <div class="readout-input mono" id="concValue">2.5</div>
+          <span class="readout-unit">mg/mL</span>
+        </div>
         <div class="readout-card highlight">
           <span class="readout-label">Draw to</span>
           <input type="number" id="unitsInput" inputmode="decimal" min="0" step="0.5" class="readout-input mono" value="25" />
@@ -212,10 +214,24 @@
       </div>
       <div class="supply-duration" id="supplyDuration">About 20 days of supply.</div>
 
-      <div class="plan-row">
-        <span class="plan-label">Plan for</span>
-        <input type="number" id="planAmount" inputmode="decimal" min="0" step="1" value="3" class="plan-input" />
-        <div class="mode-toggle" id="planUnitToggle">
+      <div class="selector plan-selector">
+        <h3 class="selector-title">Plan for</h3>
+        <div class="chip-group" id="planAmountGroup">
+          <button type="button" class="chip" data-value="1">1</button>
+          <button type="button" class="chip" data-value="2">2</button>
+          <button type="button" class="chip active" data-value="3">3</button>
+          <button type="button" class="chip" data-value="4">4</button>
+          <button type="button" class="chip" data-value="5">5</button>
+          <button type="button" class="chip" data-value="6">6</button>
+          <button type="button" class="chip" data-value="7">7</button>
+          <button type="button" class="chip" data-value="8">8</button>
+          <button type="button" class="chip" data-value="9">9</button>
+          <button type="button" class="chip" data-value="10">10</button>
+          <button type="button" class="chip" data-value="11">11</button>
+          <button type="button" class="chip" data-value="12">12</button>
+        </div>
+        <input type="number" class="custom-field" id="planAmountCustom" inputmode="decimal" min="0" step="1" placeholder="Custom amount" />
+        <div class="mode-toggle plan-unit-toggle" id="planUnitToggle">
           <button type="button" class="mode-btn" data-unit="weeks">Weeks</button>
           <button type="button" class="mode-btn active" data-unit="months">Months</button>
           <button type="button" class="mode-btn" data-unit="years">Years</button>
@@ -224,7 +240,6 @@
       <div class="plan-result" id="planResult">You'll need about 5 vials to cover 3 months.</div>
     </section>
 
-    </div>
   </main>
 
   <footer class="app-footer">
