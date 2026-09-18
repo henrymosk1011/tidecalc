@@ -244,43 +244,6 @@
     <div class="order-empty" id="ordersEmpty">No orders yet &mdash; configure a peptide above and tap &ldquo;Add to order.&rdquo;</div>
   </section>
 
-  <section class="panel bacwater-panel">
-    <div class="panel-head"><span class="eyebrow">BAC Water Planner</span></div>
-    <p class="hint hint-tight">List every peptide you're running to see how much bacteriostatic water you'll burn through. A reconstituted vial and an opened BAC bottle are both assumed good only for the shelf life below, even if there's some left when it closes.</p>
-
-    <div class="selector">
-      <h3 class="selector-title">Your BAC bottle size</h3>
-      <div class="chip-group" id="bacBottleGroup">
-        <button type="button" class="chip" data-value="3">3mL</button>
-        <button type="button" class="chip" data-value="5">5mL</button>
-        <button type="button" class="chip active" data-value="10">10mL</button>
-        <button type="button" class="chip" data-value="30">30mL</button>
-      </div>
-      <input type="number" class="custom-field" id="bacBottleCustom" inputmode="decimal" min="0.1" step="0.1" placeholder="Custom bottle size (mL)" />
-    </div>
-
-    <div class="field-row">
-      <label for="bacShelfDaysGlobal">Shelf life once opened</label>
-      <div class="input-unit">
-        <input type="number" id="bacShelfDaysGlobal" inputmode="decimal" min="1" step="1" value="28" />
-        <span class="unit">days</span>
-      </div>
-    </div>
-
-    <div class="panel-divider"></div>
-
-    <div id="bacRowsList"></div>
-    <div class="order-empty" id="bacRowsEmpty" hidden>No peptides added yet.</div>
-
-    <div class="order-card-footer">
-      <button type="button" class="add-item-btn" id="addBacRowBtn">+ Add peptide</button>
-    </div>
-
-    <div class="panel-divider"></div>
-
-    <div id="bacSummary"></div>
-  </section>
-
   <footer class="app-footer">
     Prices and vial sizes reflect your current supplier price list. Shelf-life figures are planning estimates &mdash; always confirm actual reconstituted stability for each peptide.
   </footer>

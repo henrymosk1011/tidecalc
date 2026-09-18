@@ -240,6 +240,26 @@
       <div class="plan-result" id="planResult">You'll need about 5 vials to cover 3 months.</div>
     </section>
 
+    <section class="panel bacwater-panel">
+      <div class="panel-head"><span class="eyebrow">BAC Water Planner</span></div>
+      <p class="hint hint-tight">Track every peptide you're running to see how much bacteriostatic water you'll burn through per month and year.</p>
+
+      <div class="selector bac-settings">
+        <h3 class="selector-title">Shelf life once opened</h3>
+        <div class="bac-input-wrap">
+          <input type="number" id="bacShelfDaysGlobal" inputmode="decimal" min="1" step="1" value="28" />
+          <span class="unit">days</span>
+        </div>
+      </div>
+
+      <div id="bacRowsList"></div>
+      <div class="bac-empty" id="bacRowsEmpty" hidden>No peptides added yet.</div>
+
+      <button type="button" class="bac-add-btn" id="addBacRowBtn">+ Add peptide</button>
+
+      <div class="bac-summary" id="bacSummary"></div>
+    </section>
+
   </main>
 
   <footer class="app-footer">
@@ -247,6 +267,7 @@
   </footer>
 
 </div>
+<script src="catalog.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
