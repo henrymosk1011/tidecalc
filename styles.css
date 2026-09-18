@@ -501,187 +501,122 @@ main {
   white-space: nowrap;
 }
 
-#bacRowsList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.bac-row {
-  background: var(--surface);
+.bac-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--panel-line);
-  border-radius: 12px;
-  padding: 13px 14px;
+  border-radius: 10px;
 }
 
-.bac-row-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.bac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
 }
 
-.bac-row-name {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: none;
+.bac-table th {
+  text-align: left;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 700;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--panel-line);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.bac-table th.bac-col-bac { color: var(--accent-strong); }
+
+.bac-table td {
+  padding: 4px 6px;
   border-bottom: 1px solid var(--panel-line);
   color: var(--text);
-  font-family: var(--sans);
-  font-size: 14.5px;
-  font-weight: 700;
-  padding: 4px 2px;
-  outline: none;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.bac-row-name:focus-visible { border-bottom-color: var(--accent); }
+.bac-table tbody tr:last-child td { border-bottom: none; }
+.bac-table tbody tr:hover { background: var(--surface); }
 
-.bac-row-remove {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.bac-cell-name,
+.bac-cell-input,
+.bac-cell-select {
   background: transparent;
-  border: none;
-  border-radius: 999px;
-  color: var(--text-dim);
-  font-size: 17px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-}
-
-.bac-row-remove:hover { color: var(--warning); background: var(--warning-bg); }
-
-.bac-row-group-peptide { margin-top: 12px; }
-
-.bac-row-group-bac {
-  margin-top: 12px;
-  padding: 10px 10px 2px;
-  background: rgba(94, 234, 212, 0.05);
-  border: 1px solid rgba(94, 234, 212, 0.18);
-  border-radius: 9px;
-}
-
-.bac-row-group-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-
-.bac-row-group-bac .bac-row-group-title { color: var(--accent-strong); }
-
-.bac-row-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
-}
-
-@media (min-width: 560px) {
-  .bac-row-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-.bac-row-fields-bac { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-.bac-field { min-width: 0; }
-
-.bac-field label {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 5px;
-}
-
-.bac-select {
-  width: 100%;
-  background: var(--panel);
-  border: 1px solid var(--panel-line);
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
   color: var(--text);
-  font-family: var(--sans);
-  font-size: 13px;
-  padding: 8px;
   outline: none;
+  padding: 7px 7px;
 }
 
-.bac-select:focus-visible { box-shadow: inset 0 0 0 1px var(--accent); }
+.bac-cell-name:hover,
+.bac-cell-input:hover,
+.bac-cell-select:hover { border-color: var(--panel-line); }
 
-.bac-row-note {
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-dim);
+.bac-cell-name:focus-visible,
+.bac-cell-input:focus-visible,
+.bac-cell-select:focus-visible { border-color: var(--accent); background: var(--panel); }
+
+.bac-cell-name {
+  width: 120px;
+  min-width: 110px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 13px;
 }
 
-.bac-row-warning {
-  margin-top: 8px;
-  background: var(--warning-bg);
-  border: 1px solid rgba(251, 191, 36, 0.4);
-  color: var(--warning);
-  font-size: 12px;
-  line-height: 1.4;
-  padding: 8px 10px;
-  border-radius: 7px;
-}
-
-.bac-period-grid {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.bac-period-card {
-  background: var(--panel);
-  border: 1px solid var(--panel-line);
-  border-radius: 8px;
-  padding: 9px 10px;
-  text-align: center;
-}
-
-.bac-period-card .bac-period-label {
-  display: block;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.bac-period-card .bac-period-value {
-  display: block;
-  margin-top: 4px;
+.bac-cell-input {
+  width: 62px;
   font-family: var(--mono);
-  font-size: 17px;
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.bac-cell-input.bac-cell-warn-input { color: var(--warning); border-color: rgba(251, 191, 36, 0.5); }
+
+.bac-cell-select {
+  font-family: var(--sans);
+  font-size: 12.5px;
+}
+
+.bac-cell-custom-days.bac-cell-inactive { opacity: 0.35; }
+
+.bac-cell-result {
+  font-family: var(--mono);
+  padding: 7px;
+}
+
+.bac-cell-result .bac-cell-main {
   font-weight: 700;
   color: var(--accent-strong);
 }
 
-.bac-period-card .bac-period-fraction {
-  display: block;
-  margin-top: 3px;
-  font-size: 10.5px;
-  font-weight: 600;
+.bac-cell-result .bac-cell-sub {
+  margin-left: 4px;
   color: var(--text-dim);
+  font-size: 11px;
 }
 
-.bac-period-card .bac-period-sub {
-  display: block;
-  margin-top: 2px;
-  font-size: 10.5px;
+.bac-cell-note { color: var(--text-dim); }
+.bac-cell-warn { color: var(--warning); font-family: var(--sans); font-size: 12px; }
+
+.bac-table-remove {
+  background: transparent;
+  border: none;
   color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
 }
+
+.bac-table-remove:hover { color: var(--warning); }
 
 .bac-empty {
-  margin-top: 10px;
+  margin-top: 14px;
   text-align: center;
   font-size: 13px;
   color: var(--text-dim);
@@ -772,3 +707,4 @@ main {
   font-size: 10.5px;
   color: var(--text-dim);
 }
+

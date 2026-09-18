@@ -25,6 +25,7 @@
     themeToggle: document.getElementById("themeToggle"),
 
     bacShelfDaysGlobal: document.getElementById("bacShelfDaysGlobal"),
+    bacTableWrap: document.getElementById("bacTableWrap"),
     bacRowsList: document.getElementById("bacRowsList"),
     bacRowsEmpty: document.getElementById("bacRowsEmpty"),
     addBacRowBtn: document.getElementById("addBacRowBtn"),
@@ -423,48 +424,35 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   }
 
-  function bacFieldHtml(label, role, id, value, unit, step) {
-    return '<div class="bac-field"><label>' + label + '</label><div class="bac-input-wrap"><input type="number" inputmode="decimal" min="0" step="' +
-      step + '" class="bac-input" data-role="' + role + '" data-id="' + id + '" value="' + fmtSmart(value) + '" /><span class="unit">' + unit + "</span></div></div>";
+  function bacCellInputHtml(role, id, value, step) {
+    return '<td><input type="number" inputmode="decimal" min="0" step="' + step + '" class="bac-cell-input" data-role="' +
+      role + '" data-id="' + id + '" value="' + fmtSmart(value) + '" /></td>';
   }
 
   var BAC_FREQ_OPTIONS = [["daily", "Daily"], ["eod", "EOD"], ["weekly", "Weekly"], ["custom", "Custom"]];
 
   function bacRowHtml(row) {
     var isCustom = row.freq === "custom";
-    var html = '<div class="bac-row" data-id="' + row.id + '">';
-    html += '<div class="bac-row-head">';
-    html += '<input type="text" class="bac-row-name" data-role="bac-name" data-id="' + row.id + '" value="' + escapeAttr(row.name) + '" placeholder="Peptide name" />';
-    html += '<button type="button" class="bac-row-remove" data-role="bac-remove" data-id="' + row.id + '" aria-label="Remove peptide">&times;</button>';
-    html += "</div>";
-
-    html += '<div class="bac-row-group bac-row-group-peptide">';
-    html += '<div class="bac-row-group-title">Peptide</div>';
-    html += '<div class="bac-row-fields">';
-    html += bacFieldHtml("mg / vial", "bac-mg", row.id, row.mgPerVial, "mg", "0.01");
-    html += bacFieldHtml("Dose", "bac-dose", row.id, row.doseMg, "mg", "0.01");
-    html += '<div class="bac-field"><label>Frequency</label><select class="bac-select" data-role="bac-freq" data-id="' + row.id + '">';
+    var tr = '<tr data-id="' + row.id + '">';
+    tr += '<td><input type="text" class="bac-cell-name" data-role="bac-name" data-id="' + row.id + '" value="' + escapeAttr(row.name) + '" placeholder="Peptide name" /></td>';
+    tr += bacCellInputHtml("bac-mg", row.id, row.mgPerVial, "0.01");
+    tr += bacCellInputHtml("bac-dose", row.id, row.doseMg, "0.01");
+    tr += '<td><select class="bac-cell-select" data-role="bac-freq" data-id="' + row.id + '">';
     BAC_FREQ_OPTIONS.forEach(function (opt) {
-      html += '<option value="' + opt[0] + '"' + (row.freq === opt[0] ? " selected" : "") + ">" + opt[1] + "</option>";
+      tr += '<option value="' + opt[0] + '"' + (row.freq === opt[0] ? " selected" : "") + ">" + opt[1] + "</option>";
     });
-    html += "</select></div>";
-    html += '<div class="bac-field" data-role="bac-custom-wrap"' + (isCustom ? "" : " hidden") + ">";
-    html += bacFieldHtml("Every", "bac-custom-days", row.id, row.customFreqDays, "days", "1");
-    html += "</div>";
-    html += "</div>";
-    html += "</div>";
-
-    html += '<div class="bac-row-group bac-row-group-bac">';
-    html += '<div class="bac-row-group-title">BAC Water</div>';
-    html += '<div class="bac-row-fields bac-row-fields-bac">';
-    html += bacFieldHtml("BAC added", "bac-recon", row.id, row.reconMl, "mL", "0.01");
-    html += bacFieldHtml("Bottle size", "bac-bottle", row.id, row.bottleMl, "mL", "0.1");
-    html += "</div>";
-    html += "</div>";
-
-    html += '<div class="bac-row-result" data-role="bac-result"></div>';
-    html += "</div>";
-    return html;
+    tr += "</select></td>";
+    tr += '<td class="bac-cell-custom-days' + (isCustom ? "" : " bac-cell-inactive") + '" data-role="bac-custom-wrap">' +
+      '<input type="number" inputmode="decimal" min="1" step="1" class="bac-cell-input" data-role="bac-custom-days" data-id="' +
+      row.id + '" value="' + fmtSmart(row.customFreqDays) + '" /></td>';
+    tr += bacCellInputHtml("bac-recon", row.id, row.reconMl, "0.01");
+    tr += bacCellInputHtml("bac-bottle", row.id, row.bottleMl, "0.1");
+    tr += '<td class="bac-cell-result" data-role="bac-doses"></td>';
+    tr += '<td class="bac-cell-result" data-role="bac-month"></td>';
+    tr += '<td class="bac-cell-result" data-role="bac-year"></td>';
+    tr += '<td><button type="button" class="bac-table-remove" data-role="bac-remove" data-id="' + row.id + '" aria-label="Remove peptide">&times;</button></td>';
+    tr += "</tr>";
+    return tr;
   }
 
   function fmtBottles(v) {
@@ -472,37 +460,44 @@
     return (Math.round(v * 10) / 10).toString();
   }
 
-  function bacPeriodCardHtml(label, period) {
-    if (!period.ok) {
-      return '<div class="bac-period-card"><span class="bac-period-label">' + label +
-        '</span><span class="bac-period-value">&mdash;</span><span class="bac-period-sub">Not enough plan to estimate</span></div>';
-    }
-    return '<div class="bac-period-card"><span class="bac-period-label">' + label +
-      '</span><span class="bac-period-value">' + plural(period.bacBottles, "bottle") +
-      '</span><span class="bac-period-fraction">&asymp; ' + fmtBottles(period.trueBottles) + " actually used</span>" +
-      '<span class="bac-period-sub">' + fmtSmart(period.bacMl) + " mL &middot; " + plural(period.peptideVials, "vial") + "</span></div>";
-  }
-
-  function bacResultHtml(row, calc) {
-    if (calc.econ.dosesPerVial <= 0) {
-      return '<div class="bac-row-note">Dose is bigger than this vial &mdash; lower the dose or use a bigger vial.</div>';
-    }
-    var limitedText = calc.econ.limitedBy === "shelf" ? "capped by shelf life" : "capped by mg in vial";
-    var html = '<div class="bac-row-note">' + calc.econ.dosesPerVial + " dose" + (calc.econ.dosesPerVial === 1 ? "" : "s") +
-      "/vial &middot; lasts " + fmtDaysApprox(calc.econ.activeDays) + " (" + limitedText + ")</div>";
-    if (calc.bottleTooSmall) {
-      html += '<div class="bac-row-warning">This bottle can&rsquo;t hold a full ' + fmtSmart(row.reconMl) + "mL reconstitution &mdash; use a bigger bottle.</div>";
-    }
-    html += '<div class="bac-period-grid">' + bacPeriodCardHtml("This month", calc.month) + bacPeriodCardHtml("This year", calc.year) + "</div>";
-    return html;
+  function bacPeriodCellHtml(period) {
+    if (!period.ok) return '<span class="bac-cell-note">&mdash;</span>';
+    return '<span class="bac-cell-main">' + plural(period.bacBottles, "bottle") +
+      '</span><span class="bac-cell-sub">(&asymp;' + fmtBottles(period.trueBottles) + " used)</span>";
   }
 
   function updateBacRowResult(id) {
     var row = findBacRow(id);
     if (!row) return;
-    var rowEl = els.bacRowsList.querySelector('.bac-row[data-id="' + id + '"]');
+    var rowEl = els.bacRowsList.querySelector('tr[data-id="' + id + '"]');
     if (!rowEl) return;
-    rowEl.querySelector('[data-role="bac-result"]').innerHTML = bacResultHtml(row, computeBacRow(row));
+    var calc = computeBacRow(row);
+
+    var bottleInput = rowEl.querySelector('[data-role="bac-bottle"]');
+    if (bottleInput) {
+      bottleInput.classList.toggle("bac-cell-warn-input", calc.bottleTooSmall);
+      bottleInput.title = calc.bottleTooSmall
+        ? "This bottle can't hold a full " + fmtSmart(row.reconMl) + "mL reconstitution — use a bigger bottle."
+        : "";
+    }
+
+    var dosesCell = rowEl.querySelector('[data-role="bac-doses"]');
+    var monthCell = rowEl.querySelector('[data-role="bac-month"]');
+    var yearCell = rowEl.querySelector('[data-role="bac-year"]');
+
+    if (calc.econ.dosesPerVial <= 0) {
+      if (dosesCell) dosesCell.innerHTML = '<span class="bac-cell-warn">Dose &gt; vial</span>';
+      if (monthCell) monthCell.innerHTML = '<span class="bac-cell-note">&mdash;</span>';
+      if (yearCell) yearCell.innerHTML = '<span class="bac-cell-note">&mdash;</span>';
+      return;
+    }
+
+    if (dosesCell) {
+      dosesCell.innerHTML = '<span class="bac-cell-main">' + calc.econ.dosesPerVial + '</span><span class="bac-cell-sub">(' + fmtDaysApprox(calc.econ.activeDays) + ")</span>";
+      dosesCell.title = calc.econ.limitedBy === "shelf" ? "Capped by shelf life" : "Capped by mg in vial";
+    }
+    if (monthCell) monthCell.innerHTML = bacPeriodCellHtml(calc.month);
+    if (yearCell) yearCell.innerHTML = bacPeriodCellHtml(calc.year);
   }
 
   function bacBreakdownForPeriod(periodKey) {
@@ -572,6 +567,7 @@
 
   function renderBacRows() {
     els.bacRowsList.innerHTML = bacRows.map(bacRowHtml).join("");
+    els.bacTableWrap.hidden = bacRows.length === 0;
     els.bacRowsEmpty.hidden = bacRows.length > 0;
 
     els.bacRowsList.querySelectorAll('[data-role="bac-remove"]').forEach(function (btn) {
@@ -600,8 +596,8 @@
         var row = findBacRow(select.dataset.id);
         if (!row) return;
         row.freq = select.value;
-        var wrap = select.closest(".bac-row").querySelector('[data-role="bac-custom-wrap"]');
-        if (wrap) wrap.hidden = row.freq !== "custom";
+        var wrap = select.closest("tr").querySelector('[data-role="bac-custom-wrap"]');
+        if (wrap) wrap.classList.toggle("bac-cell-inactive", row.freq !== "custom");
         updateBacRowResult(row.id);
         updateBacSummary();
         saveBacState();

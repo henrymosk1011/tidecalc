@@ -252,7 +252,26 @@
         </div>
       </div>
 
-      <div id="bacRowsList"></div>
+      <div class="bac-table-wrap" id="bacTableWrap">
+        <table class="bac-table">
+          <thead>
+            <tr>
+              <th>Peptide</th>
+              <th>mg/vial</th>
+              <th>Dose (mg)</th>
+              <th>Freq</th>
+              <th>Every (d)</th>
+              <th class="bac-col-bac">BAC (mL)</th>
+              <th class="bac-col-bac">Bottle (mL)</th>
+              <th>Doses/vial</th>
+              <th>This month</th>
+              <th>This year</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bacRowsList"></tbody>
+        </table>
+      </div>
       <div class="bac-empty" id="bacRowsEmpty" hidden>No peptides added yet.</div>
 
       <button type="button" class="bac-add-btn" id="addBacRowBtn">+ Add peptide</button>
