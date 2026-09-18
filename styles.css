@@ -556,8 +556,28 @@ main {
 
 .bac-row-remove:hover { color: var(--warning); background: var(--warning-bg); }
 
+.bac-row-group-peptide { margin-top: 12px; }
+
+.bac-row-group-bac {
+  margin-top: 12px;
+  padding: 10px 10px 2px;
+  background: rgba(94, 234, 212, 0.05);
+  border: 1px solid rgba(94, 234, 212, 0.18);
+  border-radius: 9px;
+}
+
+.bac-row-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.bac-row-group-bac .bac-row-group-title { color: var(--accent-strong); }
+
 .bac-row-fields {
-  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 10px;
@@ -566,6 +586,8 @@ main {
 @media (min-width: 560px) {
   .bac-row-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+.bac-row-fields-bac { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .bac-field { min-width: 0; }
 
@@ -643,6 +665,14 @@ main {
   color: var(--accent-strong);
 }
 
+.bac-period-card .bac-period-fraction {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
 .bac-period-card .bac-period-sub {
   display: block;
   margin-top: 2px;
@@ -718,6 +748,14 @@ main {
   font-size: 21px;
   font-weight: 800;
   color: var(--accent);
+}
+
+.bac-summary-card .bac-summary-fraction {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
 }
 
 .bac-summary-card .bac-summary-breakdown {

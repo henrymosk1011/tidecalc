@@ -404,7 +404,11 @@
       var plan = planPeptideVials(row.mgPerVial, row.doseMg, dpDose, bacShelfDays, days);
       if (!plan.ok) return { ok: false };
       var bottles = planBacBottles(row.bottleMl, row.reconMl, bacShelfDays, plan.vialsNeeded, plan.cycleDays);
-      return { ok: true, peptideVials: plan.vialsNeeded, bacBottles: bottles, bacMl: plan.vialsNeeded * row.reconMl };
+      // bacBottles is how many bottles you must open (can't buy a fraction of
+      // one); trueBottles is the actual average rate of consumption, so a
+      // rounded-up "2 bottles" doesn't read as if all of both get used up.
+      var trueBottles = row.bottleMl > 0 ? (days / plan.cycleDays) * row.reconMl / row.bottleMl : 0;
+      return { ok: true, peptideVials: plan.vialsNeeded, bacBottles: bottles, bacMl: plan.vialsNeeded * row.reconMl, trueBottles: trueBottles };
     }
 
     return {
@@ -434,6 +438,8 @@
     html += '<button type="button" class="bac-row-remove" data-role="bac-remove" data-id="' + row.id + '" aria-label="Remove peptide">&times;</button>';
     html += "</div>";
 
+    html += '<div class="bac-row-group bac-row-group-peptide">';
+    html += '<div class="bac-row-group-title">Peptide</div>';
     html += '<div class="bac-row-fields">';
     html += bacFieldHtml("mg / vial", "bac-mg", row.id, row.mgPerVial, "mg", "0.01");
     html += bacFieldHtml("Dose", "bac-dose", row.id, row.doseMg, "mg", "0.01");
@@ -442,16 +448,28 @@
       html += '<option value="' + opt[0] + '"' + (row.freq === opt[0] ? " selected" : "") + ">" + opt[1] + "</option>";
     });
     html += "</select></div>";
-    html += bacFieldHtml("BAC added", "bac-recon", row.id, row.reconMl, "mL", "0.01");
-    html += bacFieldHtml("Bottle size", "bac-bottle", row.id, row.bottleMl, "mL", "0.1");
     html += '<div class="bac-field" data-role="bac-custom-wrap"' + (isCustom ? "" : " hidden") + ">";
     html += bacFieldHtml("Every", "bac-custom-days", row.id, row.customFreqDays, "days", "1");
+    html += "</div>";
+    html += "</div>";
+    html += "</div>";
+
+    html += '<div class="bac-row-group bac-row-group-bac">';
+    html += '<div class="bac-row-group-title">BAC Water</div>';
+    html += '<div class="bac-row-fields bac-row-fields-bac">';
+    html += bacFieldHtml("BAC added", "bac-recon", row.id, row.reconMl, "mL", "0.01");
+    html += bacFieldHtml("Bottle size", "bac-bottle", row.id, row.bottleMl, "mL", "0.1");
     html += "</div>";
     html += "</div>";
 
     html += '<div class="bac-row-result" data-role="bac-result"></div>';
     html += "</div>";
     return html;
+  }
+
+  function fmtBottles(v) {
+    if (!isFinite(v) || v < 0) v = 0;
+    return (Math.round(v * 10) / 10).toString();
   }
 
   function bacPeriodCardHtml(label, period) {
@@ -461,7 +479,8 @@
     }
     return '<div class="bac-period-card"><span class="bac-period-label">' + label +
       '</span><span class="bac-period-value">' + plural(period.bacBottles, "bottle") +
-      '</span><span class="bac-period-sub">' + fmtSmart(period.bacMl) + " mL &middot; " + plural(period.peptideVials, "vial") + "</span></div>";
+      '</span><span class="bac-period-fraction">&asymp; ' + fmtBottles(period.trueBottles) + " actually used</span>" +
+      '<span class="bac-period-sub">' + fmtSmart(period.bacMl) + " mL &middot; " + plural(period.peptideVials, "vial") + "</span></div>";
   }
 
   function bacResultHtml(row, calc) {
@@ -505,11 +524,11 @@
       els.bacSummary.innerHTML = '<div class="bac-summary-title">Total Bottles</div><div class="bac-empty">Add a peptide above to see your BAC water totals.</div>';
       return;
     }
-    var totalMonthMl = 0, totalMonthBottles = 0, totalYearMl = 0, totalYearBottles = 0, activeCount = 0;
+    var totalMonthMl = 0, totalMonthBottles = 0, totalMonthTrue = 0, totalYearMl = 0, totalYearBottles = 0, totalYearTrue = 0, activeCount = 0;
     bacRows.forEach(function (row) {
       var calc = computeBacRow(row);
-      if (calc.month.ok) { totalMonthMl += calc.month.bacMl; totalMonthBottles += calc.month.bacBottles; activeCount++; }
-      if (calc.year.ok) { totalYearMl += calc.year.bacMl; totalYearBottles += calc.year.bacBottles; }
+      if (calc.month.ok) { totalMonthMl += calc.month.bacMl; totalMonthBottles += calc.month.bacBottles; totalMonthTrue += calc.month.trueBottles; activeCount++; }
+      if (calc.year.ok) { totalYearMl += calc.year.bacMl; totalYearBottles += calc.year.bacBottles; totalYearTrue += calc.year.trueBottles; }
     });
     if (!activeCount) {
       els.bacSummary.innerHTML = '<div class="bac-summary-title">Total Bottles</div><div class="bac-empty">Fix the peptide setups above (dose vs. vial size) to see totals.</div>';
@@ -521,10 +540,12 @@
     var html = '<div class="bac-summary-title">Total Bottles</div><div class="bac-summary-grid">';
     html += '<div class="bac-summary-card"><span class="bac-summary-label">Per month</span><span class="bac-summary-value">' +
       plural(totalMonthBottles, "bottle") + "</span>" +
+      '<span class="bac-summary-fraction">&asymp; ' + fmtBottles(totalMonthTrue) + " actually used</span>" +
       (monthBreakdown ? '<span class="bac-summary-breakdown">' + monthBreakdown + "</span>" : "") +
       '<span class="bac-summary-sub">' + fmtSmart(totalMonthMl) + " mL &middot; " + peptideLabel + "</span></div>";
     html += '<div class="bac-summary-card"><span class="bac-summary-label">Per year</span><span class="bac-summary-value">' +
       plural(totalYearBottles, "bottle") + "</span>" +
+      '<span class="bac-summary-fraction">&asymp; ' + fmtBottles(totalYearTrue) + " actually used</span>" +
       (yearBreakdown ? '<span class="bac-summary-breakdown">' + yearBreakdown + "</span>" : "") +
       '<span class="bac-summary-sub">' + fmtSmart(totalYearMl) + " mL &middot; " + peptideLabel + "</span></div>";
     html += "</div>";
