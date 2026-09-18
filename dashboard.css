@@ -1,3 +1,149 @@
+/* Base layout + field primitives (this page's own; the shared stylesheet's
+   versions were replaced by the chip-based calculator redesign) */
+
+main {
+  padding: 18px 22px 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+@media (min-width: 760px) {
+  main { grid-template-columns: 1fr 1fr; }
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  gap: 14px;
+}
+
+.field-row[hidden] { display: none; }
+
+.field-row label {
+  font-size: 14.5px;
+  color: var(--text);
+}
+
+.input-unit {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 140px;
+}
+
+.input-unit input {
+  width: 94px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 9px 0 9px 12px;
+  text-align: right;
+  outline: none;
+}
+
+.input-unit input:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.input-unit .unit {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  padding: 0 11px 0 7px;
+  border-left: 1px solid var(--panel-line);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.pill-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 12px 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.pill:hover { border-color: var(--accent); }
+
+.pill span {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.pill.active {
+  border-color: var(--accent);
+  background: rgba(94, 234, 212, 0.10);
+  color: var(--accent);
+}
+
+.pill.active span { color: var(--accent); opacity: 0.85; }
+
+.plan-row {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--panel-line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plan-input {
+  width: 64px;
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 9px 8px;
+  text-align: center;
+  outline: none;
+}
+
+.plan-input:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .pill-group-3 {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -674,4 +820,195 @@ details[open] .details-summary::after {
 
 @media (min-width: 760px) {
   .econ-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* BAC Water Planner */
+
+.bacwater-panel {
+  margin: 0 22px 18px;
+}
+
+.bacwater-panel .selector {
+  margin-top: 4px;
+}
+
+#bacRowsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bac-row {
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.bac-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bac-row-name {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--panel-line);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 6px 2px;
+  outline: none;
+}
+
+.bac-row-name:focus-visible { border-bottom-color: var(--accent); }
+
+.bac-row-fields {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+@media (min-width: 640px) {
+  .bac-row-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.bac-field {
+  min-width: 0;
+}
+
+.bac-field label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.bac-field .input-unit {
+  min-width: 0;
+  width: 100%;
+}
+
+.bac-field .input-unit input {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.bac-select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  padding: 9px 8px;
+  outline: none;
+}
+
+.bac-select:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.bac-row-note {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.bac-row-warning {
+  margin-top: 10px;
+  background: var(--warning-bg);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: var(--warning);
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 9px 11px;
+  border-radius: 8px;
+}
+
+.bac-period-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bac-period-card {
+  background: var(--surface);
+  border: 1px solid var(--panel-line);
+  border-radius: 9px;
+  padding: 11px 12px;
+  text-align: center;
+}
+
+.bac-period-card .bac-period-label {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.bac-period-card .bac-period-value {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.bac-period-card .bac-period-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.bac-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bac-summary-card {
+  background: rgba(94, 234, 212, 0.06);
+  border: 1px solid rgba(94, 234, 212, 0.25);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+
+.bac-summary-card .bac-summary-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.bac-summary-card .bac-summary-value {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.bac-summary-card .bac-summary-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
 }

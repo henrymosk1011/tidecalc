@@ -49,6 +49,14 @@
     ordersList: document.getElementById("ordersList"),
     ordersEmpty: document.getElementById("ordersEmpty"),
 
+    bacBottleGroup: document.getElementById("bacBottleGroup"),
+    bacBottleCustom: document.getElementById("bacBottleCustom"),
+    bacShelfDaysGlobal: document.getElementById("bacShelfDaysGlobal"),
+    bacRowsList: document.getElementById("bacRowsList"),
+    bacRowsEmpty: document.getElementById("bacRowsEmpty"),
+    addBacRowBtn: document.getElementById("addBacRowBtn"),
+    bacSummary: document.getElementById("bacSummary"),
+
     themeToggle: document.getElementById("themeToggle")
   };
 
@@ -803,6 +811,355 @@
     });
   }
 
+  // BAC Water Planner: a free-form list of peptides (any mix of catalog
+  // presets or fully custom entries) used only to total up BAC water
+  // consumption across a month/year. Reuses the same vialEconomics /
+  // planPeptide / planBac math as the single-peptide planner above, with
+  // one shelf-life figure standing in for both vialShelfDays and
+  // bacShelfDays since the user runs both bottle types on the same clock.
+
+  var BAC_KEY = "peptideBacPlanner";
+  var BAC_BOTTLE_PRESETS = [3, 5, 10, 30];
+
+  var bacBottleMl = 10;
+  var bacBottleCustomActive = false;
+  var bacShelfDays = 28;
+  var bacRows = [];
+  var bacBottleHighlight = null;
+
+  function newBacRowId() {
+    return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function defaultBacRow(index) {
+    var p = CATALOG.peptides[index % CATALOG.peptides.length];
+    var sku = getSku(p, p.defaultSku || p.skus[0].sku);
+    return {
+      id: newBacRowId(),
+      name: p.name,
+      mgPerVial: sku.mgPerVial,
+      reconMl: p.defaultReconMl || 2,
+      doseMg: p.defaultDoseMg,
+      freq: p.defaultFreq || "daily",
+      customFreqDays: 3
+    };
+  }
+
+  function findBacRow(id) {
+    for (var i = 0; i < bacRows.length; i++) {
+      if (bacRows[i].id === id) return bacRows[i];
+    }
+    return null;
+  }
+
+  function bacRowDaysPerDose(row) {
+    if (row.freq === "daily") return 1;
+    if (row.freq === "eod") return 2;
+    if (row.freq === "weekly") return 7;
+    return Math.max(1, row.customFreqDays || 1);
+  }
+
+  function computeBacRow(row) {
+    var dpDose = bacRowDaysPerDose(row);
+    var econ = vialEconomics(row.mgPerVial, row.doseMg, dpDose, bacShelfDays);
+    var fakeSku = { mgPerVial: row.mgPerVial, lotVials: 1, lotPrice: 0 };
+    var bacSku = { mlPerVial: bacBottleMl, lotVials: 1, lotPrice: 0 };
+
+    function period(days) {
+      var plan = planPeptide(fakeSku, row.doseMg, dpDose, bacShelfDays, days);
+      if (!plan.ok) return { ok: false };
+      var bac = planBac(bacSku, row.reconMl, bacShelfDays, plan.vialsNeeded, plan.cycleDays);
+      return {
+        ok: true,
+        peptideVials: plan.vialsNeeded,
+        bacBottles: bac.vialsNeeded,
+        bacMl: plan.vialsNeeded * row.reconMl
+      };
+    }
+
+    return {
+      econ: econ,
+      dpDose: dpDose,
+      bottleTooSmall: bacBottleMl > 0 && row.reconMl > bacBottleMl,
+      month: period(DAY_LEN.months),
+      year: period(DAY_LEN.years)
+    };
+  }
+
+  function escapeAttr(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+
+  function bacPeriodCardHtml(label, period) {
+    if (!period.ok) {
+      return '<div class="bac-period-card"><span class="bac-period-label">' + label +
+        '</span><span class="bac-period-value">&mdash;</span><span class="bac-period-sub">Not enough plan to estimate</span></div>';
+    }
+    return '<div class="bac-period-card"><span class="bac-period-label">' + label +
+      '</span><span class="bac-period-value">' + plural(period.bacBottles, "bottle") +
+      '</span><span class="bac-period-sub">' + fmtSmart(period.bacMl) + " mL &middot; " + plural(period.peptideVials, "vial") + "</span></div>";
+  }
+
+  function bacResultHtml(row, calc) {
+    if (calc.econ.dosesPerVial <= 0) {
+      return '<div class="bac-row-note">Dose is bigger than this vial &mdash; lower the dose or use a bigger vial.</div>';
+    }
+    var limitedText = calc.econ.limitedBy === "shelf" ? "capped by shelf life" : "capped by mg in vial";
+    var html = '<div class="bac-row-note">' + calc.econ.dosesPerVial + " dose" + (calc.econ.dosesPerVial === 1 ? "" : "s") +
+      " per vial, lasting " + fmtDaysApprox(calc.econ.activeDays) + " (" + limitedText + ").</div>";
+    if (calc.bottleTooSmall) {
+      html += '<div class="bac-row-warning">Your ' + fmtSmart(bacBottleMl) + "mL bottle can&rsquo;t hold a full " +
+        fmtSmart(row.reconMl) + "mL reconstitution &mdash; pick a bigger bottle size above.</div>";
+    }
+    html += '<div class="bac-period-grid">' + bacPeriodCardHtml("This month", calc.month) + bacPeriodCardHtml("This year", calc.year) + "</div>";
+    return html;
+  }
+
+  function bacFieldHtml(label, role, id, value, unit, step) {
+    return '<div class="bac-field"><label>' + label + '</label><div class="input-unit"><input type="number" inputmode="decimal" min="0" step="' +
+      step + '" class="bac-input" data-role="' + role + '" data-id="' + id + '" value="' + fmtSmart(value) + '" /><span class="unit">' + unit + "</span></div></div>";
+  }
+
+  var BAC_FREQ_OPTIONS = [["daily", "Daily"], ["eod", "Every other day"], ["weekly", "Weekly"], ["custom", "Custom"]];
+
+  function bacRowHtml(row) {
+    var isCustom = row.freq === "custom";
+    var html = '<div class="bac-row" data-id="' + row.id + '">';
+    html += '<div class="bac-row-head">';
+    html += '<input type="text" class="bac-row-name" data-role="bac-name" data-id="' + row.id + '" value="' + escapeAttr(row.name) + '" placeholder="Peptide name" />';
+    html += '<button type="button" class="order-row-remove" data-role="bac-remove" data-id="' + row.id + '" aria-label="Remove peptide">&times;</button>';
+    html += "</div>";
+
+    html += '<div class="bac-row-fields">';
+    html += bacFieldHtml("mg / vial", "bac-mg", row.id, row.mgPerVial, "mg", "0.01");
+    html += bacFieldHtml("BAC added", "bac-recon", row.id, row.reconMl, "mL", "0.01");
+    html += bacFieldHtml("Dose / injection", "bac-dose", row.id, row.doseMg, "mg", "0.01");
+
+    html += '<div class="bac-field"><label>Frequency</label><select class="bac-select" data-role="bac-freq" data-id="' + row.id + '">';
+    BAC_FREQ_OPTIONS.forEach(function (opt) {
+      html += '<option value="' + opt[0] + '"' + (row.freq === opt[0] ? " selected" : "") + ">" + opt[1] + "</option>";
+    });
+    html += "</select></div>";
+
+    html += '<div class="bac-field" data-role="bac-custom-wrap"' + (isCustom ? "" : " hidden") + ">";
+    html += bacFieldHtml("Every", "bac-custom-days", row.id, row.customFreqDays, "days", "1");
+    html += "</div>";
+    html += "</div>";
+
+    html += '<div class="bac-row-result" data-role="bac-result"></div>';
+    html += "</div>";
+    return html;
+  }
+
+  function updateBacRowResult(id) {
+    var row = findBacRow(id);
+    if (!row) return;
+    var rowEl = els.bacRowsList.querySelector('.bac-row[data-id="' + id + '"]');
+    if (!rowEl) return;
+    var resultEl = rowEl.querySelector('[data-role="bac-result"]');
+    resultEl.innerHTML = bacResultHtml(row, computeBacRow(row));
+  }
+
+  function updateBacSummary() {
+    if (!bacRows.length) {
+      els.bacSummary.innerHTML = '<div class="order-empty">Add a peptide above to see your BAC water totals.</div>';
+      return;
+    }
+    var totalMonthMl = 0, totalMonthBottles = 0, totalYearMl = 0, totalYearBottles = 0, activeCount = 0;
+    bacRows.forEach(function (row) {
+      var calc = computeBacRow(row);
+      if (calc.month.ok) {
+        totalMonthMl += calc.month.bacMl;
+        totalMonthBottles += calc.month.bacBottles;
+        activeCount++;
+      }
+      if (calc.year.ok) {
+        totalYearMl += calc.year.bacMl;
+        totalYearBottles += calc.year.bacBottles;
+      }
+    });
+    if (!activeCount) {
+      els.bacSummary.innerHTML = '<div class="order-empty">Fix the peptide setups above (dose vs. vial size) to see totals.</div>';
+      return;
+    }
+    var peptideLabel = plural(bacRows.length, "peptide");
+    var html = '<div class="bac-summary-grid">';
+    html += '<div class="bac-summary-card"><span class="bac-summary-label">Per month</span><span class="bac-summary-value">' +
+      plural(totalMonthBottles, "bottle") + '</span><span class="bac-summary-sub">' + fmtSmart(totalMonthMl) + " mL across " + peptideLabel + "</span></div>";
+    html += '<div class="bac-summary-card"><span class="bac-summary-label">Per year</span><span class="bac-summary-value">' +
+      plural(totalYearBottles, "bottle") + '</span><span class="bac-summary-sub">' + fmtSmart(totalYearMl) + " mL across " + peptideLabel + "</span></div>";
+    html += "</div>";
+    els.bacSummary.innerHTML = html;
+  }
+
+  function renderAllBacResults() {
+    bacRows.forEach(function (row) { updateBacRowResult(row.id); });
+    updateBacSummary();
+  }
+
+  function renderBacRows() {
+    els.bacRowsList.innerHTML = bacRows.map(bacRowHtml).join("");
+    els.bacRowsEmpty.hidden = bacRows.length > 0;
+
+    els.bacRowsList.querySelectorAll('[data-role="bac-remove"]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        bacRows = bacRows.filter(function (r) { return r.id !== btn.dataset.id; });
+        renderBacRows();
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-name"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        var row = findBacRow(input.dataset.id);
+        if (!row) return;
+        row.name = input.value;
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-mg"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        var row = findBacRow(input.dataset.id);
+        if (!row) return;
+        row.mgPerVial = num(input);
+        updateBacRowResult(row.id);
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-recon"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        var row = findBacRow(input.dataset.id);
+        if (!row) return;
+        row.reconMl = num(input);
+        updateBacRowResult(row.id);
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-dose"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        var row = findBacRow(input.dataset.id);
+        if (!row) return;
+        row.doseMg = num(input);
+        updateBacRowResult(row.id);
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-custom-days"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        var row = findBacRow(input.dataset.id);
+        if (!row) return;
+        row.customFreqDays = num(input) || 1;
+        updateBacRowResult(row.id);
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+    els.bacRowsList.querySelectorAll('[data-role="bac-freq"]').forEach(function (select) {
+      select.addEventListener("change", function () {
+        var row = findBacRow(select.dataset.id);
+        if (!row) return;
+        row.freq = select.value;
+        var wrap = select.closest(".bac-row").querySelector('[data-role="bac-custom-wrap"]');
+        if (wrap) wrap.hidden = row.freq !== "custom";
+        updateBacRowResult(row.id);
+        updateBacSummary();
+        saveBacState();
+      });
+    });
+
+    renderAllBacResults();
+  }
+
+  function wireBacBottleChips() {
+    var chips = Array.prototype.slice.call(els.bacBottleGroup.querySelectorAll(".chip"));
+
+    function highlight(value, isCustom) {
+      chips.forEach(function (chip) {
+        chip.classList.toggle("active", !isCustom && Math.abs(parseFloat(chip.dataset.value) - value) < 1e-9);
+      });
+      els.bacBottleCustom.classList.toggle("active-custom", isCustom);
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        bacBottleMl = parseFloat(chip.dataset.value);
+        bacBottleCustomActive = false;
+        highlight(bacBottleMl, false);
+        els.bacBottleCustom.value = "";
+        renderAllBacResults();
+        saveBacState();
+      });
+    });
+
+    els.bacBottleCustom.addEventListener("input", function () {
+      var v = parseFloat(els.bacBottleCustom.value);
+      if (isFinite(v) && v > 0) {
+        bacBottleMl = v;
+        bacBottleCustomActive = true;
+        highlight(v, true);
+        renderAllBacResults();
+        saveBacState();
+      }
+    });
+
+    bacBottleHighlight = highlight;
+  }
+
+  function initBacBottleChips() {
+    var matched = !bacBottleCustomActive && BAC_BOTTLE_PRESETS.some(function (v) { return Math.abs(v - bacBottleMl) < 1e-9; });
+    bacBottleHighlight(bacBottleMl, !matched);
+    if (!matched) els.bacBottleCustom.value = fmtSmart(bacBottleMl);
+  }
+
+  function saveBacState() {
+    try {
+      localStorage.setItem(BAC_KEY, JSON.stringify({
+        bacBottleMl: bacBottleMl,
+        bacBottleCustomActive: bacBottleCustomActive,
+        bacShelfDays: bacShelfDays,
+        bacRows: bacRows
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function loadBacState() {
+    var saved = null;
+    try {
+      var raw = localStorage.getItem(BAC_KEY);
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) {
+      saved = null;
+    }
+
+    if (saved) {
+      if (saved.bacBottleMl) bacBottleMl = saved.bacBottleMl;
+      bacBottleCustomActive = !!saved.bacBottleCustomActive;
+      if (saved.bacShelfDays) bacShelfDays = saved.bacShelfDays;
+      bacRows = Array.isArray(saved.bacRows) && saved.bacRows.length ? saved.bacRows : [defaultBacRow(0)];
+    } else {
+      bacRows = [defaultBacRow(0)];
+    }
+
+    els.bacShelfDaysGlobal.value = fmtSmart(bacShelfDays);
+  }
+
+  function wireBacEvents() {
+    wireBacBottleChips();
+    els.bacShelfDaysGlobal.addEventListener("input", function () {
+      bacShelfDays = num(els.bacShelfDaysGlobal) || 28;
+      renderAllBacResults();
+      saveBacState();
+    });
+    els.addBacRowBtn.addEventListener("click", function () {
+      bacRows.push(defaultBacRow(bacRows.length));
+      renderBacRows();
+      saveBacState();
+    });
+  }
+
   var lastPlan = null;
 
   function render() {
@@ -1046,8 +1403,12 @@
   }
 
   wireEvents();
+  wireBacEvents();
   loadTheme();
   loadState();
+  loadBacState();
+  initBacBottleChips();
+  renderBacRows();
   renderOrders();
   render();
 
