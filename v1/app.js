@@ -805,11 +805,6 @@
   loadBacState();
   renderBacRows();
 
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js").catch(function () {
-        /* offline caching unavailable, app still works fully online */
-      });
-    });
-  }
+  /* No service worker: this archived v1 is served online only. The root
+     sw.js unregisters the offline cache the original site installed. */
 })();

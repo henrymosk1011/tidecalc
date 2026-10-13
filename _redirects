@@ -1,0 +1,7 @@
+# tidecalc.com now points at the hlix calculator. The original site lives on
+# at /v1/; ?from=tidecalc tells the hlix page to show a "v1" link back here.
+# 302 (temporary) so browsers don't cache it and this can be reverted.
+/                https://hlixlabs.vercel.app/calculator.html?from=tidecalc  302
+/index.html      https://hlixlabs.vercel.app/calculator.html?from=tidecalc  302
+/dashboard       /v1/dashboard.html                                         302
+/dashboard.html  /v1/dashboard.html                                         302

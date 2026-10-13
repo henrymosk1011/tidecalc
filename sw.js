@@ -1,43 +1,24 @@
-var CACHE_NAME = "peptide-calc-v10";
-var ASSETS = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./dashboard.html",
-  "./dashboard.css",
-  "./dashboard.js",
-  "./catalog.js",
-  "./manifest.webmanifest",
-  "./icons/icon192.png",
-  "./icons/icon512.png"
-];
-
-self.addEventListener("install", function (event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(ASSETS);
-    })
-  );
+// Retires the offline cache the original tidecalc installed.
+//
+// tidecalc.com now redirects to the hlix calculator, but anyone who visited
+// the old site still has a cache-first service worker serving the old page.
+// Browsers re-check this file on their next visit; this version wipes the
+// cache, unregisters itself and reloads open tabs so the redirect takes over.
+self.addEventListener("install", function () {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", function (event) {
   event.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(
-        keys.filter(function (key) { return key !== CACHE_NAME; })
-            .map(function (key) { return caches.delete(key); })
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener("fetch", function (event) {
-  event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      return cached || fetch(event.request);
-    })
+    self.clients.claim()
+      .then(function () { return caches.keys(); })
+      .then(function (keys) {
+        return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+      })
+      .then(function () { return self.registration.unregister(); })
+      .then(function () { return self.clients.matchAll({ type: "window" }); })
+      .then(function (clients) {
+        clients.forEach(function (client) { client.navigate(client.url); });
+      })
   );
 });
